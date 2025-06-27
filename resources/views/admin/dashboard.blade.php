@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Inventaris Barang Sekolah</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.3/cdn.min.js" defer></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                        accent: '#10b981',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 6px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Glassmorphism effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        
+        /* Table row hover */
+        .table-row-hover:hover {
+            @apply bg-gray-50/50;
+        }
+        
+        /* Smooth transitions */
+        .transition-slow {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Custom badge styles */
+        .badge-dipinjam {
+            @apply bg-indigo-50 text-indigo-800 px-2.5 py-0.5 rounded-full text-xs font-medium;
+        }
+        .badge-dikembalikan {
+            @apply bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full text-xs font-medium;
+        }
+        .badge-terlambat {
+            @apply bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-full text-xs font-medium;
+        }
+        .badge-diperbaiki {
+            @apply bg-purple-50 text-purple-800 px-2.5 py-0.5 rounded-full text-xs font-medium;
+        }
+        .badge-warning {
+            @apply bg-rose-50 text-rose-800 px-2.5 py-0.5 rounded-full text-xs font-medium;
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased bg-gradient-to-br from-gray-50 via-white to-gray-100" x-data="dashboardApp()">
+    <!-- Sidebar -->
+    <aside class="fixed inset-y-0 left-0 z-30 w-64 glass shadow-lg border-r border-gray-200/70 transition-all duration-300 ease-in-out transform -translate-x-full lg:translate-x-0" id="sidebar">
+        <div class="flex flex-col h-full">
+            <div class="p-6 pb-4 flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-lg">IS</div>
+                <h2 class="text-xl font-semibold text-gray-800">Inventaris Sekolah</h2>
+            </div>
+            
+            <nav class="flex-1 px-3 overflow-y-auto">
+                <ul class="space-y-1">
+                    <li>
+                        <a href="dashboard" class="flex items-center px-4 py-3 text-white bg-gradient-to-r from-primary to-secondary rounded-lg shadow-sm">
+                            <i class="fas fa-th-large w-5 mr-3 text-center"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/barang" class="flex items-center px-4 py-3 text-gray-600 hover:text-primary-600 hover:bg-gray-100/50 rounded-lg transition-slow">
+                            <i class="fas fa-box w-5 mr-3 text-center"></i>
+                            <span>Barang</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/transaksi" class="flex items-center px-4 py-3 text-gray-600 hover:text-primary-600 hover:bg-gray-100/50 rounded-lg transition-slow">
+                            <i class="fas fa-exchange-alt w-5 mr-3 text-center"></i>
+                            <span>Transaksi</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/ruangan" class="flex items-center px-4 py-3 text-gray-600 hover:text-primary-600 hover:bg-gray-100/50 rounded-lg transition-slow">
+                            <i class="fas fa-warehouse w-5 mr-3 text-center"></i>
+                            <span>Ruangan</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/kategori" class="flex items-center px-4 py-3 text-gray-600 hover:text-primary-600 hover:bg-gray-100/50 rounded-lg transition-slow">
+                            <i class="fas fa-clipboard-list w-5 mr-3 text-center"></i>
+                            <span>Kategori</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/pengguna" class="flex items-center px-4 py-3 text-gray-600 hover:text-primary-600 hover:bg-gray-100/50 rounded-lg transition-slow">
+                            <i class="fas fa-users w-5 mr-3 text-center"></i>
+                            <span>Pengguna</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/laporan" class="flex items-center px-4 py-3 text-gray-600 hover:text-primary-600 hover:bg-gray-100/50 rounded-lg transition-slow">
+                            <i class="fas fa-file-alt w-5 mr-3 text-center"></i>
+                            <span>Laporan</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="p-4 border-t border-gray-200/70" x-data="{ open: false }">
+                <div class="flex items-center space-x-3 cursor-pointer group" 
+                    @click="open = !open">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-primary-600 font-semibold">
+                        {{ substr(Auth::user()->name, 0, 2) }}
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900">{{ Auth::user()->name }}</h3>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 group-hover:text-gray-600" 
+                    :class="{ 'transform rotate-180': open }"></i>
+                </div>
+
+                <div x-show="open" 
+                    x-transition
+                    class="mt-2 space-y-1 pl-13">
+                    <a href="/admin/pengaturan" 
+                    class="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-100/50 rounded-lg transition-slow">
+                        <i class="fas fa-cog w-4 mr-2 text-center"></i>
+                        Pengaturan
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" 
+                                class="flex items-center w-full px-3 py-2 text-sm text-rose-500 hover:text-rose-600 hover:bg-rose-50/30 rounded-lg transition-slow">
+                            <i class="fas fa-sign-out-alt w-4 mr-2 text-center text-rose-500"></i>
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Navbar -->
+    <nav class="fixed top-0 right-0 left-0 lg:left-64 h-16 glass border-b border-gray-200/70 shadow-sm z-20 px-6 flex items-center justify-between transition-all duration-300 ease-in-out">
+        <button class="lg:hidden text-gray-500 hover:text-gray-700 focus:outline-none transition-slow" id="sidebar-toggle">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+        
+        <div class="hidden lg:block relative w-96">
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="text" class="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-slow" placeholder="Cari barang, transaksi, atau kategori...">
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 rounded-full transition-slow">
+                <i class="fas fa-bell text-xl"></i>
+                <span class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+            </button>
+            {{-- <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 rounded-full transition-slow">
+                <i class="fas fa-envelope text-xl"></i>
+                <span class="absolute top-0 right-0 w-5 h-5 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+            </button> --}}
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="pt-16 lg:pl-64 min-h-screen transition-all duration-300 ease-in-out">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+                    <p class="text-gray-600">Selamat datang kembali, Admin Sekolah!</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <div class="flex items-center space-x-2 text-sm text-gray-500">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span x-text="currentDate"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total Barang -->
+                <div class="bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 p-6 hover:shadow-md transition-slow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Total Barang</p>
+                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.total_items">1,258</h3>
+                            <p class="text-xs mt-1 flex items-center" :class="stats.items_change >= 0 ? 'text-green-600' : 'text-red-600'">
+                                <span x-text="stats.items_change >= 0 ? '↑' : '↓'"></span>
+                                <span x-text="Math.abs(stats.items_change) + '% sejak bulan lalu'"></span>
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <i class="fas fa-box text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Barang Dipinjam -->
+                <div class="bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 p-6 hover:shadow-md transition-slow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Barang Dipinjam</p>
+                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.borrowed_items">42</h3>
+                            <p class="text-xs mt-1 flex items-center" :class="stats.borrowed_change >= 0 ? 'text-green-600' : 'text-red-600'">
+                                <span x-text="stats.borrowed_change >= 0 ? '↑' : '↓'"></span>
+                                <span x-text="Math.abs(stats.borrowed_change) + '% sejak bulan lalu'"></span>
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                            <i class="fas fa-hand-holding text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kategori -->
+                <div class="bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 p-6 hover:shadow-md transition-slow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Kategori</p>
+                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.categories">24</h3>
+                            <p class="text-xs mt-1 flex items-center" :class="stats.categories_change >= 0 ? 'text-green-600' : 'text-red-600'">
+                                <span x-text="stats.categories_change >= 0 ? '↑' : '↓'"></span>
+                                <span x-text="Math.abs(stats.categories_change) + '% sejak bulan lalu'"></span>
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                            <i class="fas fa-tag text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Ruangan -->
+                <div class="bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 p-6 hover:shadow-md transition-slow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Ruangan</p>
+                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.rooms">18</h3>
+                            <p class="text-xs mt-1 flex items-center" :class="stats.rooms_change >= 0 ? 'text-green-600' : 'text-red-600'">
+                                <span x-text="stats.rooms_change >= 0 ? '↑' : '↓'"></span>
+                                <span x-text="Math.abs(stats.rooms_change) + '% sejak bulan lalu'"></span>
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                            <i class="fas fa-building text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            {{-- <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Transaksi Terbaru -->
+                <div class="lg:col-span-2 bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200/70 flex items-center justify-between bg-gray-50/50">
+                        <h3 class="text-lg font-semibold text-gray-800">Transaksi Terbaru</h3>
+                        <a href="/admin/transaksi" class="text-sm text-primary-600 hover:text-primary-800 transition-slow">
+                            Lihat Semua <i class="fas fa-chevron-right ml-1"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="overflow-x-auto rounded-lg border border-gray-200/70 shadow-sm">
+                            <table class="min-w-full divide-y divide-gray-200/70">
+                                <thead class="bg-gray-50/80">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">ID</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Nama Barang</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Peminjam</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Tanggal</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200/70">
+                                    @forelse($recentTransactions as $transaction)
+                                    <tr class="table-row-hover transition-colors duration-150">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{{ $transaction['id'] }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $transaction['item_name'] }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $transaction['peminjam'] ?? '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $transaction['date'] }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span class="badge-{{ strtolower($transaction['status']) }}">{{ $transaction['status'] }}</span>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Tidak ada data transaksi terbaru</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>      
+         
+        </div> --}}
+    </main>
+
+    <script>
+        function dashboardApp() {
+            return {
+                currentDate: new Date().toLocaleDateString('id-ID', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                }),
+                
+                stats: @json($stats),
+                
+                init() {
+                    // Jika ingin auto-refresh data setiap beberapa menit
+                    setInterval(() => {
+                        this.fetchDashboardData();
+                    }, 300000); // 5 menit
+                },
+                
+                fetchDashboardData() {
+                    fetch('/admin/dashboard/data')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.stats = data.stats;
+                        });
+                }
+            }
+        }
+
+        // Toggle sidebar for mobile
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+    </script>
+</body>
+</html>

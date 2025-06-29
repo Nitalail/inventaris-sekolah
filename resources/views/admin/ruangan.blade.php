@@ -206,14 +206,7 @@
         </div>
         
         <div class="flex items-center space-x-4">
-            <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 rounded-full transition-slow">
-                <i class="fas fa-bell text-xl"></i>
-                <span class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
-            </button>
-            {{-- <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 rounded-full transition-slow">
-                <i class="fas fa-envelope text-xl"></i>
-                <span class="absolute top-0 right-0 w-5 h-5 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
-            </button> --}}
+            @include('partials.admin-notifications')
         </div>
     </nav>
     
@@ -297,8 +290,7 @@
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">No</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Kode</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Nama Ruangan</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Kapasitas</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Jumlah Barang</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Jumlah Item</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Aksi</th>
                                 </tr>
@@ -309,8 +301,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 room-code">{{ $room->kode_ruangan }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 room-name">{{ $room->nama_ruangan }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $room->kapasitas }} orang</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $room->jumlah_barang }} barang</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $room->total_sub_barang ?? 0 }} item</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         @if ($room->status === 'aktif')
                                             <span class="badge-aktif">Aktif</span>
@@ -391,19 +382,6 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-4">
-                        <div>
-                            <label for="kapasitas" class="block text-sm font-medium text-gray-700 mb-1">Kapasitas</label>
-                            <input type="number" name="kapasitas" id="kapasitas" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" 
-                                placeholder="30" required>
-                        </div>
-                        <div>
-                            <label for="jumlah_barang" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Barang</label>
-                            <input type="number" name="jumlah_barang" id="jumlah_barang" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" 
-                                placeholder="15" required>
-                        </div>
-                    </div>
-                    
                     <div class="mt-4">
                         <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                         <select name="status" id="status" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" required>
@@ -454,15 +432,9 @@
                         <p class="mt-1 text-sm text-gray-900" id="detail_nama">-</p>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500">Kapasitas</h4>
-                            <p class="mt-1 text-sm text-gray-900" id="detail_kapasitas">-</p>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500">Jumlah Barang</h4>
-                            <p class="mt-1 text-sm text-gray-900" id="detail_jumlah_barang">-</p>
-                        </div>
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-500">Jumlah Item</h4>
+                        <p class="mt-1 text-sm text-gray-900" id="detail_jumlah_barang">-</p>
                     </div>
                     
                     <div class="mb-4">
@@ -512,16 +484,7 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-4">
-                        <div>
-                            <label for="edit_kapasitas" class="block text-sm font-medium text-gray-700 mb-1">Kapasitas</label>
-                            <input type="number" name="kapasitas" id="edit_kapasitas" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" required>
-                        </div>
-                        <div>
-                            <label for="edit_jumlah_barang" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Barang</label>
-                            <input type="number" name="jumlah_barang" id="edit_jumlah_barang" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" required>
-                        </div>
-                    </div>
+
                     
                     <div class="mt-4">
                         <label for="edit_status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -569,8 +532,7 @@
         function showDetailModal(data) {
             document.getElementById('detail_kode').textContent = data.kode_ruangan || '-';
             document.getElementById('detail_nama').textContent = data.nama_ruangan || '-';
-            document.getElementById('detail_kapasitas').textContent = data.kapasitas + ' orang' || '-';
-            document.getElementById('detail_jumlah_barang').textContent = data.jumlah_barang + ' barang' || '-';
+            document.getElementById('detail_jumlah_barang').textContent = (data.total_sub_barang || 0) + ' item';
             
             // Set status with appropriate badge
             const statusEl = document.getElementById('detail_status');
@@ -602,8 +564,6 @@
             document.getElementById('edit_id_ruangan').value = room.id || '';
             document.getElementById('edit_kode_ruangan').value = room.kode_ruangan || '';
             document.getElementById('edit_nama_ruangan').value = room.nama_ruangan || '';
-            document.getElementById('edit_kapasitas').value = room.kapasitas || '';
-            document.getElementById('edit_jumlah_barang').value = room.jumlah_barang || '';
             document.getElementById('edit_status').value = room.status || 'aktif';
             document.getElementById('edit_deskripsi').value = room.deskripsi || '';
 

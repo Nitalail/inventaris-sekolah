@@ -17,11 +17,8 @@ class Barang extends Model
         'kode',
         'nama',
         'kategori_id',
-        'kondisi',
-        'jumlah',
         'satuan',  
         'ruangan_id',
-        'tahun_perolehan',
         'deskripsi',
         'sumber_dana',  // ganti dari 'keterangan'
     ];
@@ -29,9 +26,7 @@ class Barang extends Model
     // Cast tipe data otomatis
     protected $casts = [
         'kategori_id' => 'integer',
-        'jumlah' => 'integer',
         'ruangan_id' => 'integer',
-        'tahun_perolehan' => 'integer',
     ];
 
     // Relasi Barang ke Kategori (many-to-one)
@@ -46,25 +41,11 @@ class Barang extends Model
         return $this->belongsTo(Ruangan::class, 'ruangan_id');
     }
 
-    // Method untuk mendapatkan class badge bootstrap sesuai kondisi barang
-    public function getKondisiBadgeClass()
+    // Relasi Barang ke SubBarang (one-to-many)
+    public function subBarang()
     {
-        return match ($this->kondisi) {
-            'baik' => 'badge-success',
-            'rusak_ringan' => 'badge-warning',
-            'rusak_berat' => 'badge-danger',
-            default => 'badge-secondary',
-        };
+        return $this->hasMany(SubBarang::class, 'barang_id');
     }
 
-    // Accessor untuk menampilkan nama kondisi dengan format yang lebih baik
-    public function getKondisiNameAttribute()
-    {
-        return match ($this->kondisi) {
-            'baik' => 'Baik',
-            'rusak_ringan' => 'Rusak Ringan',
-            'rusak_berat' => 'Rusak Berat',
-            default => $this->kondisi,
-        };
-    }
+
 }

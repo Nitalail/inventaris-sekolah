@@ -12,8 +12,18 @@ class RuanganController extends Controller
     // Tampilkan daftar ruangan dengan pagination
     public function index()
     {
-        // Gunakan paginate() instead of all()
-        $rooms = Ruangan::paginate(10); // 10 records per page
+        // Load ruangan dengan menghitung jumlah sub barang
+        $rooms = Ruangan::with(['barangs.subBarang'])
+            ->paginate(10);
+        
+        // Hitung jumlah sub barang untuk setiap ruangan
+        $rooms->getCollection()->transform(function ($room) {
+            $room->total_sub_barang = $room->barangs->sum(function ($barang) {
+                return $barang->subBarang->count();
+            });
+            return $room;
+        });
+        
         return view('admin.ruangan', compact('rooms'));
     }
 
@@ -23,8 +33,6 @@ class RuanganController extends Controller
         $validated = $request->validate([
             'kode_ruangan' => 'required|string|max:10|unique:ruangan,kode_ruangan',
             'nama_ruangan' => 'required|string|max:255',
-            'kapasitas' => 'required|integer|min:1',
-            'jumlah_barang' => 'required|integer|min:0',
             'status' => 'required|in:aktif,perbaikan,tidak_aktif',
             'deskripsi' => 'nullable|string',
         ]);
@@ -40,8 +48,6 @@ class RuanganController extends Controller
         $validated = $request->validate([
             'kode_ruangan' => 'required|string|max:10|unique:ruangan,kode_ruangan,' . $id,
             'nama_ruangan' => 'required|string|max:255',
-            'kapasitas' => 'required|integer|min:1',
-            'jumlah_barang' => 'required|integer|min:0',
             'status' => 'required|in:aktif,perbaikan,tidak_aktif',
             'deskripsi' => 'nullable|string',
         ]);
@@ -64,7 +70,16 @@ class RuanganController extends Controller
     // Export PDF
     public function exportPDF()
     {
-        $rooms = Ruangan::all(); // Use all() for PDF export to get all records
+        $rooms = Ruangan::with(['barangs.subBarang'])->get();
+        
+        // Hitung jumlah sub barang untuk setiap ruangan
+        $rooms->transform(function ($room) {
+            $room->total_sub_barang = $room->barangs->sum(function ($barang) {
+                return $barang->subBarang->count();
+            });
+            return $room;
+        });
+        
         $pdf = Pdf::loadView('admin.export-ruangan-pdf', compact('rooms'));
         return $pdf->download('data-ruangan.pdf');
     }

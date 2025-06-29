@@ -192,14 +192,7 @@
         </div>
         
         <div class="flex items-center space-x-4">
-            <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 rounded-full transition-slow">
-                <i class="fas fa-bell text-xl"></i>
-                <span class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
-            </button>
-            {{-- <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 rounded-full transition-slow">
-                <i class="fas fa-envelope text-xl"></i>
-                <span class="absolute top-0 right-0 w-5 h-5 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
-            </button> --}}
+            @include('partials.admin-notifications')
         </div>
     </nav>
     
@@ -222,29 +215,29 @@
 
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <!-- Total Barang -->
+                <!-- Total Sub Barang -->
                 <div class="bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 p-6 hover:shadow-md transition-slow">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-500">Total Barang</p>
-                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.total_items">1,258</h3>
+                            <p class="text-sm font-medium text-gray-500">Total Sub Barang</p>
+                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.total_items">0</h3>
                             <p class="text-xs mt-1 flex items-center" :class="stats.items_change >= 0 ? 'text-green-600' : 'text-red-600'">
                                 <span x-text="stats.items_change >= 0 ? '↑' : '↓'"></span>
                                 <span x-text="Math.abs(stats.items_change) + '% sejak bulan lalu'"></span>
                             </p>
                         </div>
-                        <div class="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <div class="w-12 h-12 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600">
                             <i class="fas fa-box text-xl"></i>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Barang Dipinjam -->
+                <!-- Item Dipinjam -->
                 <div class="bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 p-6 hover:shadow-md transition-slow">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-500">Barang Dipinjam</p>
-                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.borrowed_items">42</h3>
+                            <p class="text-sm font-medium text-gray-500">Item Dipinjam</p>
+                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.borrowed_items">0</h3>
                             <p class="text-xs mt-1 flex items-center" :class="stats.borrowed_change >= 0 ? 'text-green-600' : 'text-red-600'">
                                 <span x-text="stats.borrowed_change >= 0 ? '↑' : '↓'"></span>
                                 <span x-text="Math.abs(stats.borrowed_change) + '% sejak bulan lalu'"></span>
@@ -261,7 +254,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Kategori</p>
-                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.categories">24</h3>
+                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.categories">0</h3>
                             <p class="text-xs mt-1 flex items-center" :class="stats.categories_change >= 0 ? 'text-green-600' : 'text-red-600'">
                                 <span x-text="stats.categories_change >= 0 ? '↑' : '↓'"></span>
                                 <span x-text="Math.abs(stats.categories_change) + '% sejak bulan lalu'"></span>
@@ -278,7 +271,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Ruangan</p>
-                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.rooms">18</h3>
+                            <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.rooms">0</h3>
                             <p class="text-xs mt-1 flex items-center" :class="stats.rooms_change >= 0 ? 'text-green-600' : 'text-red-600'">
                                 <span x-text="stats.rooms_change >= 0 ? '↑' : '↓'"></span>
                                 <span x-text="Math.abs(stats.rooms_change) + '% sejak bulan lalu'"></span>
@@ -292,11 +285,11 @@
             </div>
 
             <!-- Main Content Grid -->
-            {{-- <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <!-- Transaksi Terbaru -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Peminjaman Terbaru -->
                 <div class="lg:col-span-2 bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200/70 flex items-center justify-between bg-gray-50/50">
-                        <h3 class="text-lg font-semibold text-gray-800">Transaksi Terbaru</h3>
+                        <h3 class="text-lg font-semibold text-gray-800">Peminjaman Terbaru</h3>
                         <a href="/admin/transaksi" class="text-sm text-primary-600 hover:text-primary-800 transition-slow">
                             Lihat Semua <i class="fas fa-chevron-right ml-1"></i>
                         </a>
@@ -310,6 +303,7 @@
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">ID</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Nama Barang</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Peminjam</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Jumlah</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Tanggal</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                                     </tr>
@@ -320,23 +314,76 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{{ $transaction['id'] }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $transaction['item_name'] }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $transaction['peminjam'] ?? '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $transaction['quantity'] }} item</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $transaction['date'] }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="badge-{{ strtolower($transaction['status']) }}">{{ $transaction['status'] }}</span>
+                                            @php
+                                                $status = strtolower(str_replace(' ', '-', $transaction['status']));
+                                                $badgeClass = match($status) {
+                                                    'menunggu-persetujuan' => 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800',
+                                                    'dipinjam' => 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800',
+                                                    'dikonfirmasi' => 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800',
+                                                    'dikembalikan' => 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800',
+                                                    'terlambat' => 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800',
+                                                    'rusak' => 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800',
+                                                    default => 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800'
+                                                };
+                                            @endphp
+                                            <span class="{{ $badgeClass }}">{{ $transaction['status'] }}</span>
                                         </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Tidak ada data transaksi terbaru</td>
+                                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Tidak ada peminjaman terbaru</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                </div>      
-         
-        </div> --}}
+                </div>
+                
+                <!-- Statistik Tambahan -->
+                <div class="space-y-6">
+                    <!-- Total Peminjaman -->
+                    <div class="bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-semibold text-gray-800">Statistik Peminjaman</h4>
+                            <i class="fas fa-chart-bar text-gray-400"></i>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Total Peminjaman</span>
+                                <span class="text-sm font-semibold text-gray-900" x-text="stats.total_transactions">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Aktif</span>
+                                <span class="text-sm font-semibold text-blue-600" x-text="stats.active_loans">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Pending</span>
+                                <span class="text-sm font-semibold text-yellow-600" x-text="stats.pending_loans">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Selesai</span>
+                                <span class="text-sm font-semibold text-green-600" x-text="stats.completed_loans">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hari Ini -->
+                    <div class="bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-semibold text-gray-800">Hari Ini</h4>
+                            <i class="fas fa-calendar-day text-gray-400"></i>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-primary-600 mb-1" x-text="stats.today_transactions">0</div>
+                            <div class="text-sm text-gray-600">Peminjaman Baru</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
     </main>
 
     <script>
@@ -359,14 +406,41 @@
                 },
                 
                 fetchDashboardData() {
-                    fetch('/admin/dashboard/data')
-                        .then(response => response.json())
-                        .then(data => {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                    
+                    fetch('/admin/dashboard/data', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            ...(csrfToken && { 'X-CSRF-TOKEN': csrfToken.content })
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
                             this.stats = data.stats;
-                        });
+                        } else {
+                            console.error('Dashboard data fetch failed:', data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching dashboard data:', error);
+                        // Don't show error to user for auto-refresh failures
+                        if (!error.message.includes('failed to fetch')) {
+                            // Optionally show a subtle notification here
+                        }
+                    });
                 }
             }
         }
+
+
 
         // Toggle sidebar for mobile
         document.getElementById('sidebar-toggle').addEventListener('click', function() {

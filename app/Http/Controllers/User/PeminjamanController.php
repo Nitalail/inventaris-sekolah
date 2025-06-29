@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Barang;
+use App\Models\SubBarang;
+use App\Models\Peminjaman;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +39,8 @@ class PeminjamanController extends Controller
 
             $validated = $request->validate([
                 'barangId' => 'required|exists:barang,id',
+                'subBarangIds' => 'required|array|min:1|max:10',
+                'subBarangIds.*' => 'required|integer|exists:sub_barang,id',
                 'quantity' => 'required|integer|min:1|max:10',
                 'startDate' => 'required|date|after_or_equal:today',
                 'endDate' => 'required|date|after:startDate',
@@ -55,12 +61,30 @@ class PeminjamanController extends Controller
 
             Log::info('Barang found:', ['barang' => $barang]);
 
-            $availableStock = $barang->jumlah ?? 0;
+            // Validate that selected sub barang belong to the specified barang and are available
+            $selectedSubBarang = \App\Models\SubBarang::whereIn('id', $validated['subBarangIds'])
+                ->where('barang_id', $validated['barangId'])
+                ->whereIn('kondisi', ['baik', 'rusak_ringan'])
+                ->whereNotExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                             ->from('peminjaman')
+                             ->whereRaw('JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))')
+                             ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'dikonfirmasi']);
+                })
+                ->get();
 
-            if ($availableStock < $validated['quantity']) {
+            if ($selectedSubBarang->count() !== count($validated['subBarangIds'])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Stok tidak mencukupi. Stok tersedia: ' . $availableStock
+                    'message' => 'Beberapa item yang dipilih tidak valid atau tidak tersedia'
+                ], 400);
+            }
+
+            // Verify quantity matches selected items
+            if ($validated['quantity'] !== count($validated['subBarangIds'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jumlah item tidak sesuai dengan yang dipilih'
                 ], 400);
             }
 
@@ -96,6 +120,7 @@ class PeminjamanController extends Controller
                 $peminjamanId = DB::table('peminjaman')->insertGetId([
                     'user_id' => Auth::id(),
                     'barang_id' => $validated['barangId'],
+                    'sub_barang_ids' => json_encode($validated['subBarangIds']),
                     'jumlah' => $validated['quantity'],
                     'tanggal_pinjam' => $validated['startDate'],
                     'tanggal_kembali' => $validated['endDate'],
@@ -107,16 +132,16 @@ class PeminjamanController extends Controller
 
                 Log::info('Peminjaman inserted with ID:', ['id' => $peminjamanId]);
 
-                // Kurangi stok barang
-                DB::table('barang')
-                    ->where('id', $validated['barangId'])
-                    ->decrement('jumlah', $validated['quantity']);
+                // Note: Sub barang assignment should be handled here
+                // For now, we just create the borrowing request
+                // Sub barang items can be assigned during admin approval
 
                 try {
+                    $subBarangCodes = $selectedSubBarang->pluck('kode')->join(', ');
                     DB::table('activity_logs')->insert([
                         'user_id' => Auth::id(),
                         'action' => 'create_borrow_request',
-                        'description' => 'Mengajukan peminjaman untuk ' . $barang->nama,
+                        'description' => 'Mengajukan peminjaman untuk ' . $barang->nama . ' (Item: ' . $subBarangCodes . ')',
                         'created_at' => now(),
                     ]);
                 } catch (\Exception $logError) {
@@ -125,12 +150,24 @@ class PeminjamanController extends Controller
 
                 DB::commit();
 
+                // Create notification for admin
+                try {
+                    $peminjaman = Peminjaman::with(['user', 'barang'])->find($peminjamanId);
+                    if ($peminjaman) {
+                        Notification::createPeminjamanNotification($peminjaman, 'peminjaman_baru');
+                        Log::info('Notification created for peminjaman:', ['peminjaman_id' => $peminjamanId]);
+                    }
+                } catch (\Exception $notifError) {
+                    Log::warning('Failed to create notification:', ['error' => $notifError->getMessage()]);
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Permintaan peminjaman berhasil diajukan',
                     'data' => [
                         'id' => $peminjamanId,
                         'item_name' => $barang->nama,
+                        'selected_sub_barang' => $selectedSubBarang->pluck('kode')->toArray(),
                         'quantity' => $validated['quantity'],
                         'start_date' => $validated['startDate'],
                         'end_date' => $validated['endDate'],

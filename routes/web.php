@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\BarangController;
 use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\RuanganController;
+use App\Http\Controllers\Admin\SubBarangController;
 use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\LaporanController;
 use App\Http\Controllers\Admin\PengaturanController;
@@ -13,6 +14,9 @@ use App\Http\Controllers\User\DashboardUserController;
 use App\Http\Controllers\User\PeminjamanController;
 use App\Http\Controllers\User\TransaksiController;
 use App\Http\Controllers\User\PinjamanSayaController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\NotificationController;
+
 
 // 🏠 Halaman utama (redirect ke dashboard jika sudah login)
 Route::get('/', function () {
@@ -44,30 +48,20 @@ Route::prefix('admin')
 
         // 📦 Barang
         Route::resource('barang', BarangController::class);
-        Route::post('/admin/barang/store', [BarangController::class, 'store'])->name('admin.barang.store');
-        Route::get('/admin/barang', [BarangController::class, 'index'])->name('admin.barang');
-        Route::put('/admin/barang/{barang}', [BarangController::class, 'update'])->name('admin.barang.update');
-        Route::put('/admin/barang/{id}', [BarangController::class, 'update'])->name('admin.barang.update');
+        Route::get('barang-export', [BarangController::class, 'export'])->name('barang.export');
+        Route::get('barang-print', [BarangController::class, 'print'])->name('barang.print');
 
-        Route::resource('admin/barang', BarangController::class);
-        Route::prefix('admin')
-            ->name('admin.')
-            ->group(function () {
-                Route::resource('barang', BarangController::class);
-                Route::get('barang-export', [BarangController::class, 'export'])->name('barang.export');
-                Route::get('barang-print', [BarangController::class, 'print'])->name('barang.print');
-            });
+        // 📦 Sub Barang
+        Route::resource('sub-barang', SubBarangController::class);
+        Route::get('sub-barang/by-barang/{barangId}', [SubBarangController::class, 'getByBarang'])->name('sub-barang.by-barang');
+        Route::get('sub-barang/available/{barangId}', [SubBarangController::class, 'getAvailableByBarang'])->name('sub-barang.available');
 
         // 🗂️ Kategori
         Route::resource('kategori', KategoriController::class);
-        Route::delete('/admin/kategori/{id}', [KategoriController::class, 'destroy'])->name('admin.kategori.destroy');
-        Route::resource('admin/kategori', KategoriController::class);
 
         // 🏫 Ruangan
         Route::resource('ruangan', RuanganController::class);
-        Route::post('/admin/ruangan', [RuanganController::class, 'store'])->name('admin.ruangan.store');
-        Route::put('/admin/ruangan/{id}', [RuanganController::class, 'update'])->name('admin.ruangan.update');
-        Route::get('/admin/ruangan/export-pdf', [RuanganController::class, 'exportPDF'])->name('admin.ruangan.exportPDF');
+        Route::get('ruangan/export-pdf', [RuanganController::class, 'exportPDF'])->name('ruangan.exportPDF');
 
         // 🔄 Transaksi
         Route::resource('transaksi', TransaksiController::class);
@@ -76,6 +70,7 @@ Route::prefix('admin')
 
         // Route untuk melihat detail transaksi
         Route::get('/transaksi/{transaksi}', [TransaksiController::class, 'show'])->name('transaksi.show');
+        Route::get('/transaksi/{id}/detail', [TransaksiController::class, 'getDetail'])->name('transaksi.detail');
 
         // Route untuk melihat daftar transaksi user
         Route::get('/user/pinjaman-saya', [TransaksiController::class, 'userTransactions'])->name('transaksi.user');
@@ -90,11 +85,26 @@ Route::prefix('admin')
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
         Route::post('/laporan/generate', [LaporanController::class, 'generate'])->name('laporan.generate');
         Route::get('/laporan/download/{id}', [LaporanController::class, 'download'])->name('laporan.download');
-        Route::post('/admin/barang/laporan', [BarangController::class, 'generateInventoryReport'])->name('admin.barang.laporan');
+        Route::post('barang/laporan', [BarangController::class, 'generateInventoryReport'])->name('barang.laporan');
 
         // ⚙️ Pengaturan
         Route::get('/pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
         Route::post('/pengaturan', [PengaturanController::class, 'update'])->name('pengaturan.update');
+
+        // 🔔 Notifications
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::get('/count', [NotificationController::class, 'getUnreadCount'])->name('count');
+            Route::get('/stats', [NotificationController::class, 'getStats'])->name('stats');
+            Route::post('/test', [NotificationController::class, 'createTestNotification'])->name('test');
+            Route::put('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+            Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+        });
+
+
+        // Dashboard data API route
+        Route::get('/dashboard/data', [DashboardController::class, 'getData'])->name('dashboard.data');
     });
 
 // 👥 User view routes (static views)
@@ -109,23 +119,23 @@ Route::prefix('user')->group(function () {
 Route::prefix('user')
     ->middleware('auth')
     ->group(function () {
-        Route::get('dashboard', [DashboardUserController::class, 'index'])->name('dashboard');
+        Route::get('dashboard', [DashboardUserController::class, 'index'])->name('user.dashboard');
         Route::view('home', 'user.home')->name('user.home');
         Route::view('pinjaman-saya', 'user.pinjaman-saya')->name('user.pinjaman-saya');
         Route::view('riwayat', 'user.riwayat')->name('user.riwayat');
         Route::view('profile', 'user.profile')->name('user.profile');
 
-        // Transaksi user
-        Route::post('transaksi', [UserTransaksiController::class, 'store'])->name('transaksi.store');
+        // Transaksi user - commented out until proper controller is created
+        // Route::post('transaksi', [UserTransaksiController::class, 'store'])->name('transaksi.store');
 
-        // Pinjam barang
-        Route::post('pinjam/{barang}', [PinjamController::class, 'pinjamBarang'])->name('pinjam.barang');
+        // Pinjam barang - commented out until proper controller is created  
+        // Route::post('pinjam/{barang}', [PinjamController::class, 'pinjamBarang'])->name('pinjam.barang');
     });
 
-Route::get('/admin/transaksi', [App\Http\Controllers\User\TransaksiController::class, 'index'])->name('admin.transaksi.index');
+// Duplicate route removed - handled by resource route in admin group
 
-// Jangan dihapus
-Route::get('/user/dashboard-user', [DashboardUserController::class, 'index'])->name('user.dashboard');
+// Alternative route for user dashboard (for backward compatibility)
+Route::get('/user/dashboard-user', [DashboardUserController::class, 'index'])->name('user.dashboard-user');
 
 Route::post('/peminjaman', [PeminjamanController::class, 'store'])->name('peminjaman.store');
 Route::prefix('user')
@@ -137,14 +147,11 @@ Route::put('/peminjaman/{id}', [PeminjamanController::class, 'update'])->name('p
 
 Route::post('/user/peminjaman/store', [PeminjamanController::class, 'store'])->name('user.peminjaman.store');
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard-user', [UserController::class, 'index'])->name('dashboard.user');
-});
-Route::middleware(['admin'])->group(function () {
-    Route::get('/transaksi', [TransaksiController::class, 'index'])->name('admin.transaksi.index');
-    Route::post('/transaksi/{id}', [TransaksiController::class, 'update'])->name('admin.transaksi.update');
-    Route::delete('/admin/transaksi/{id}', [TransaksiController::class, 'destroy'])->name('transaksi.destroy');
-});
+// Route commented out until proper controller is created
+// Route::middleware(['auth'])->group(function () {
+//     Route::get('/dashboard-user', [UserController::class, 'index'])->name('dashboard.user');
+// });
+// Duplicate routes removed - handled by resource routes in admin group
 
 Route::middleware(['auth'])->group(function () {
     // Routes untuk halaman Pinjaman Saya
@@ -178,13 +185,23 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/user/riwayat/search', [App\Http\Controllers\User\RiwayatController::class, 'search'])->name('user.riwayat.search');
 });
 
-Route::prefix('admin')->group(function () {
-    Route::get('/laporan', [LaporanController::class, 'index'])->name('admin.laporan');
-    Route::post('/laporan/generate', [LaporanController::class, 'generate'])->name('admin.laporan.generate');
-});
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('/register', [RegisteredUserController::class, 'store']);
 });
 Route::put('/admin/pengguna/{id}', [PenggunaController::class, 'update']);
+
+// Temporary CSRF test routes - remove after testing
+Route::get('/test-csrf', function () {
+    return view('test-csrf');
+});
+
+Route::post('/test-csrf-endpoint', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'CSRF test passed!',
+        'token' => csrf_token()
+    ]);
+});

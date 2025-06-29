@@ -159,33 +159,58 @@
                 <h2 class="text-xl font-semibold text-gray-900">Cari Barang</h2>
             </div>
             
-            <form class="flex flex-col sm:flex-row gap-3 mb-4" onsubmit="searchItems(event)">
-                <input type="text" class="flex-1 min-w-0 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" placeholder="Cari buku, alat tulis, atau peralatan lainnya..." id="searchInput">
-                <select class="px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition min-w-[150px]" id="categorySelect">
+            <form method="GET" action="{{ route('user.dashboard') }}" class="flex flex-col sm:flex-row gap-3">
+                <input type="text" 
+                       name="search" 
+                       value="{{ $search }}"
+                       class="flex-1 min-w-0 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" 
+                       placeholder="Cari buku, alat tulis, atau peralatan lainnya...">
+                <select name="kategori" 
+                        class="px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition min-w-[150px]">
                     <option value="">Semua Kategori</option>
-                    <option value="buku">Buku</option>
-                    <option value="alat-tulis">Alat Tulis</option>
-                    <option value="elektronik">Elektronik</option>
-                    <option value="olahraga">Olahraga</option>
+                    @foreach($kategoris as $kategori)
+                        <option value="{{ $kategori->id }}" {{ $selectedKategori == $kategori->id ? 'selected' : '' }}>
+                            {{ $kategori->nama }}
+                        </option>
+                    @endforeach
                 </select>
                 <button type="submit" class="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition hover:-translate-y-0.5 hover:shadow">
                     <i class="fas fa-search"></i>
                     Cari
                 </button>
+                @if($search || $selectedKategori)
+                    <a href="{{ route('user.dashboard') }}" 
+                       class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition hover:-translate-y-0.5 hover:shadow">
+                        <i class="fas fa-times"></i>
+                        Reset
+                    </a>
+                @endif
             </form>
-            
-            <div class="flex flex-wrap gap-2">
-                <span class="filter-tag active bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition hover:bg-primary/20" onclick="toggleFilter(this, 'semua')">Semua</span>
-                <span class="filter-tag bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition hover:bg-primary/20" onclick="toggleFilter(this, 'tersedia')">Tersedia</span>
-                <span class="filter-tag bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition hover:bg-primary/20" onclick="toggleFilter(this, 'terbatas')">Stok Terbatas</span>
-                <span class="filter-tag bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition hover:bg-primary/20" onclick="toggleFilter(this, 'populer')">Populer</span>
-                <span class="filter-tag bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition hover:bg-primary/20" onclick="toggleFilter(this, 'baru')">Baru</span>
-            </div>
         </div>
 
+        <!-- Search Results Info -->
+        @if($search || $selectedKategori)
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                <div class="flex items-center gap-2 text-blue-800">
+                    <i class="fas fa-info-circle"></i>
+                    <span class="font-medium">
+                        @if($search && $selectedKategori)
+                            Hasil pencarian untuk "{{ $search }}" dalam kategori "{{ $kategoris->where('id', $selectedKategori)->first()->nama ?? 'Kategori' }}"
+                        @elseif($search)
+                            Hasil pencarian untuk "{{ $search }}"
+                        @elseif($selectedKategori)
+                            Menampilkan barang kategori "{{ $kategoris->where('id', $selectedKategori)->first()->nama ?? 'Kategori' }}"
+                        @endif
+                        - Ditemukan {{ $barangTersedia->count() }} barang
+                    </span>
+                </div>
+            </div>
+        @endif
+
         <!-- Items Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            @foreach($barangTersedia as $barang)
+        @if($barangTersedia->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                @foreach($barangTersedia as $barang)
             <div class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative">
                 <div class="w-full h-40 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl mb-4 flex items-center justify-center overflow-hidden">
                     @php
@@ -208,7 +233,7 @@
                 </p>
                 
                 @php
-                    $jumlah = $barang->jumlah;
+                    $jumlah = $barang->available_sub_barang_count ?? 0;
                     if ($jumlah == 0) {
                         $statusClass = 'bg-red-50 text-red-700';
                         $statusText = 'Tidak Tersedia';
@@ -233,13 +258,46 @@
 
                 <button class="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 {{ $btnDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-0.5 hover:shadow' }}" 
                     {{ $btnDisabled }} 
-                    onclick="openBorrowModal('{{ $barang->id }}', '{{ $barang->nama }}', '{{ $barang->deskripsi }}', '{{ $barang->kondisi }}')">
+                    onclick="openBorrowModal('{{ $barang->id }}', '{{ $barang->nama }}', '{{ $barang->deskripsi }}', 'baik')">
                     <i class="fas fa-hand-holding"></i>
                     Pinjam
                 </button>
             </div>
             @endforeach
         </div>
+        @else
+            <!-- Empty State -->
+            <div class="text-center py-16">
+                <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                    @if($search || $selectedKategori)
+                        <i class="fas fa-search text-3xl text-gray-400"></i>
+                    @else
+                        <i class="fas fa-box-open text-3xl text-gray-400"></i>
+                    @endif
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                    @if($search || $selectedKategori)
+                        Tidak ada barang ditemukan
+                    @else
+                        Belum ada barang tersedia
+                    @endif
+                </h3>
+                <p class="text-gray-600 mb-6">
+                    @if($search || $selectedKategori)
+                        Coba ubah kata kunci pencarian atau pilih kategori lain.
+                    @else
+                        Barang sedang tidak tersedia untuk dipinjam saat ini.
+                    @endif
+                </p>
+                @if($search || $selectedKategori)
+                    <a href="{{ route('user.dashboard') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold transition hover:-translate-y-0.5 hover:shadow">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Lihat Semua Barang
+                    </a>
+                @endif
+            </div>
+        @endif
     </main>
 
     <!-- Borrow Modal -->
@@ -379,7 +437,7 @@
 
     <script>
         // Inisialisasi variabel
-        let currentFilter = 'semua';
+        // Current filter tracking removed - using server-side filtering
         let notifications = [
             {
                 id: 1,
@@ -399,125 +457,7 @@
             }
         ];
 
-        // Fungsi untuk toggle filter
-        function toggleFilter(element, filterType) {
-            document.querySelectorAll('.filter-tag').forEach(tag => {
-                tag.classList.remove('active', 'bg-primary/20');
-            });
-            
-            element.classList.add('active', 'bg-primary/20');
-            currentFilter = filterType;
-            applyFilter(filterType);
-        }
-
-        // Fungsi untuk menerapkan filter
-        function applyFilter(filterType) {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const category = document.getElementById('categorySelect').value.toLowerCase();
-            const itemCards = document.querySelectorAll('.bg-white\\/70.backdrop-blur-sm.rounded-2xl');
-            
-            let visibleCount = 0;
-
-            itemCards.forEach(card => {
-                const title = card.querySelector('h3').textContent.toLowerCase();
-                const description = card.querySelector('p').textContent.toLowerCase();
-                const cardCategory = card.querySelector('span.text-xs.text-gray-500').textContent.toLowerCase();
-                const statusElement = card.querySelector('span.px-2\\.5.py-1.rounded-full');
-                const statusText = statusElement ? statusElement.textContent.toLowerCase() : '';
-
-                // Cek kecocokan dengan pencarian
-                const matchesSearch = searchTerm === '' || 
-                                    title.includes(searchTerm) || 
-                                    description.includes(searchTerm);
-                
-                // Cek kecocokan dengan kategori
-                const matchesCategory = category === '' || 
-                                       cardCategory.includes(category);
-                
-                // Cek kecocokan dengan filter
-                let matchesFilter = true;
-                switch(filterType) {
-                    case 'tersedia':
-                        matchesFilter = !statusText.includes('tidak tersedia');
-                        break;
-                    case 'terbatas':
-                        matchesFilter = statusText.includes('stok sedikit');
-                        break;
-                    case 'populer':
-                        matchesFilter = card.dataset.popular === 'true';
-                        break;
-                    case 'baru':
-                        matchesFilter = card.dataset.new === 'true';
-                        break;
-                    case 'semua':
-                    default:
-                        matchesFilter = true;
-                }
-
-                // Tampilkan/sembunyikan card berdasarkan hasil filter
-                if (matchesSearch && matchesCategory && matchesFilter) {
-                    card.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            updateEmptyState(visibleCount === 0);
-        }
-
-        // Fungsi untuk menangani pencarian
-        function searchItems(event) {
-            event.preventDefault();
-            applyFilter(currentFilter);
-        }
-
-        // Fungsi untuk mengupdate empty state
-        function updateEmptyState(isEmpty) {
-            const itemsContainer = document.querySelector('.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.xl\\:grid-cols-4');
-            const existingEmptyState = itemsContainer.querySelector('.empty-state');
-            
-            if (isEmpty && !existingEmptyState) {
-                const emptyState = document.createElement('div');
-                emptyState.className = 'empty-state col-span-full py-12 flex flex-col items-center animate-[fadeIn_0.5s_ease]';
-                emptyState.innerHTML = `
-                    <div class="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-4">
-                        <i class="fas fa-box-open text-gray-300 text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-700 mb-2">Tidak ada barang ditemukan</h3>
-                    <p class="text-gray-400 text-sm mb-5">Coba ubah filter atau kata kunci pencarian Anda</p>
-                    <button class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors" 
-                            onclick="resetFilters()">
-                        Reset Filter
-                    </button>
-                `;
-                itemsContainer.appendChild(emptyState);
-            } else if (!isEmpty && existingEmptyState) {
-                existingEmptyState.remove();
-            }
-        }
-
-        // Fungsi untuk mereset semua filter
-        function resetFilters() {
-            // Reset UI filter tags
-            document.querySelectorAll('.filter-tag').forEach(tag => {
-                tag.classList.remove('active', 'bg-primary/20');
-            });
-            
-            // Aktifkan filter 'semua'
-            const allFilter = document.querySelector('.filter-tag[onclick*="semua"]');
-            if (allFilter) {
-                allFilter.classList.add('active', 'bg-primary/20');
-            }
-            
-            // Reset input pencarian
-            document.getElementById('searchInput').value = '';
-            document.getElementById('categorySelect').value = '';
-
-            // Reset current filter dan apply
-            currentFilter = 'semua';
-            applyFilter('semua');
-        }
+        // Note: Filter functions removed - using server-side filtering now
 
         // Fungsi untuk modal pinjaman
         function openBorrowModal(id, name, description, condition) {
@@ -533,8 +473,16 @@
                 
                 <form id="borrowForm" onsubmit="submitBorrow(event, '${id}')">
                     <div class="mb-5">
-                        <label class="block font-semibold mb-2 text-gray-900">Jumlah yang Dipinjam</label>
-                        <input type="number" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" id="borrowQuantity" min="1" max="5" value="1" required>
+                        <label class="block font-semibold mb-2 text-gray-900">Pilih Item yang Dipinjam</label>
+                        <div class="relative">
+                            <div id="borrowItemsContainer" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition min-h-[120px] max-h-[200px] overflow-y-auto">
+                                <p class="text-gray-500 text-center py-8">Memuat item tersedia...</p>
+                            </div>
+                            <div class="flex items-center justify-between mt-2">
+                                <p class="text-xs text-gray-500">Pilih item yang ingin dipinjam</p>
+                                <span id="selectedCount" class="text-xs font-medium text-primary">0 item dipilih</span>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="mb-5">
@@ -563,23 +511,72 @@
             
             modal.style.display = 'flex';
             setupDateConstraints();
+            loadAvailableSubBarang(id);
         }
 
         function closeBorrowModal() {
             document.getElementById('borrowModal').style.display = 'none';
         }
 
+        // Fungsi untuk memuat sub barang yang tersedia
+        function loadAvailableSubBarang(barangId) {
+            const container = document.getElementById('borrowItemsContainer');
+            
+            fetch(`/admin/sub-barang/available/${barangId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        container.innerHTML = '<p class="text-gray-500 text-center py-8">Tidak ada item tersedia</p>';
+                        return;
+                    }
+                    
+                    const checkboxes = data.map(item => {
+                        const kondisiIcon = item.kondisi === 'baik' ? '✅' : '⚠️';
+                        const kondisiLabel = item.kondisi === 'baik' ? 'Baik' : 'Rusak Ringan';
+                        const kondisiClass = item.kondisi === 'baik' ? 'text-green-600' : 'text-amber-600';
+                        
+                        return `
+                            <label class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition cursor-pointer border border-transparent hover:border-gray-200">
+                                <input type="checkbox" class="sub-barang-checkbox" value="${item.id}" onchange="updateSelectedCount()">
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-medium text-gray-900">${item.kode}</span>
+                                        <span class="${kondisiClass} text-xs font-medium">${kondisiIcon} ${kondisiLabel}</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">Tahun Perolehan: ${item.tahun_perolehan}</span>
+                                </div>
+                            </label>
+                        `;
+                    }).join('');
+                    
+                    container.innerHTML = checkboxes;
+                    updateSelectedCount();
+                })
+                .catch(error => {
+                    console.error('Error loading sub barang:', error);
+                    container.innerHTML = '<p class="text-red-500 text-center py-8">Gagal memuat item</p>';
+                });
+        }
+
+        // Fungsi untuk update jumlah item yang dipilih
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.sub-barang-checkbox:checked');
+            const count = checkboxes.length;
+            document.getElementById('selectedCount').textContent = `${count} item dipilih`;
+        }
+
         // Fungsi untuk submit pinjaman
         function submitBorrow(event, itemId) {
             event.preventDefault();
             
-            const quantity = document.getElementById('borrowQuantity').value;
+            const checkboxes = document.querySelectorAll('.sub-barang-checkbox:checked');
+            const selectedItems = Array.from(checkboxes).map(checkbox => checkbox.value);
             const startDate = document.getElementById('borrowStartDate').value;
             const endDate = document.getElementById('borrowEndDate').value;
             const purpose = document.getElementById('borrowPurpose').value;
             
-            if (!quantity || !startDate || !endDate || !purpose) {
-                showToast('error', 'Semua field harus diisi!');
+            if (selectedItems.length === 0 || !startDate || !endDate || !purpose) {
+                showToast('error', 'Semua field harus diisi! Pilih minimal satu item.');
                 return;
             }
             
@@ -605,7 +602,8 @@
                 },
                 body: JSON.stringify({
                     barangId: itemId,
-                    quantity: parseInt(quantity),
+                    subBarangIds: selectedItems.map(id => parseInt(id)),
+                    quantity: selectedItems.length,
                     startDate: startDate,
                     endDate: endDate,
                     purpose: purpose
@@ -618,7 +616,7 @@
                 return response.json();
             })
             .then(data => {
-                showToast('success', 'Permintaan peminjaman berhasil diajukan!');
+                showToast('success', `Permintaan peminjaman berhasil diajukan untuk ${selectedItems.length} item!`);
                 closeBorrowModal();
                 
                 setTimeout(() => {

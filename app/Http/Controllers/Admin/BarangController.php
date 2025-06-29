@@ -13,14 +13,13 @@ class BarangController extends Controller
 {
     public function index(Request $request)
     {
-        $filters = $request->only(['kategori_id', 'ruangan_id', 'status', 'tahun']);
+        $filters = $request->only(['kategori_id', 'ruangan_id']);
         $perPage = $request->input('perPage', 10);
 
         $barangs = Barang::with(['kategori', 'ruangan'])
+            ->withCount('subBarang as sub_barang_count')
             ->when($filters['kategori_id'] ?? null, fn($q, $kategori_id) => $q->where('kategori_id', $kategori_id))
             ->when($filters['ruangan_id'] ?? null, fn($q, $ruangan_id) => $q->where('ruangan_id', $ruangan_id))
-            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('kondisi', $status))
-            ->when($filters['tahun'] ?? null, fn($q, $tahun) => $q->where('tahun_perolehan', $tahun))
             ->orderBy('created_at', 'asc')
             ->paginate($perPage);
 
@@ -30,11 +29,8 @@ class BarangController extends Controller
 
         $kategori = Kategori::all();
         $ruangan = Ruangan::all();
-        $tahun_perolehan = Barang::select('tahun_perolehan')->distinct()->pluck('tahun_perolehan')->sortDesc();
 
-        // dd($subBarangs);
-
-        return view('admin.barang', compact('barangs', 'kategori', 'ruangan', 'tahun_perolehan', 'filters', 'perPage', 'subBarangs'));
+        return view('admin.barang', compact('barangs', 'kategori', 'ruangan', 'filters', 'perPage', 'subBarangs'));
     }
 
     public function create()
@@ -51,10 +47,8 @@ class BarangController extends Controller
             'kode' => 'required|unique:barang,kode|max:50',
             'kategori_id' => 'required|exists:kategoris,id',
             'nama' => 'required|string|max:255',
-            'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
-            'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
             'ruangan_id' => 'required|exists:ruangan,id',
-            'tahun_perolehan' => 'required|integer|min:1900|max:' . date('Y'),
             'sumber_dana' => 'nullable|string|max:255',
             'deskripsi' => 'nullable|string',
         ]);
@@ -86,10 +80,8 @@ class BarangController extends Controller
             'kode' => 'required|string',
             'nama' => 'required|string',
             'kategori_id' => 'required|exists:kategoris,id',
-            'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
-            'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
             'ruangan_id' => 'required|exists:ruangan,id',
-            'tahun_perolehan' => 'required|integer',
             'sumber_dana' => 'required|string',
             'deskripsi' => 'nullable|string',
         ]);

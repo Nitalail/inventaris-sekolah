@@ -114,6 +114,10 @@
 </head>
 
 <body class="font-sans antialiased bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    @include('partials.notification-system', [
+        'clickUrl' => '/admin/transaksi',
+        'actionText' => 'ke halaman transaksi'
+    ])
     <!-- Sidebar -->
     <aside class="fixed inset-y-0 left-0 z-30 w-64 glass shadow-lg border-r border-gray-200/70 transition-all duration-300 ease-in-out transform -translate-x-full lg:translate-x-0" id="sidebar">
         <div class="flex flex-col h-full">
@@ -215,11 +219,7 @@
         </div>
         
         <div class="flex items-center space-x-4">
-            <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 rounded-full transition-slow">
-                <i class="fas fa-bell text-xl"></i>
-                <span class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
-            </button>
-            
+            @include('partials.admin-notifications')
         </div>
     </nav>
     
@@ -593,7 +593,7 @@
         document.getElementById('date_from').value = thirtyDaysAgo.toISOString().split('T')[0];
         document.getElementById('date_from').max = today;
         
-        // Form submission validation
+        // Form submission with notification
         document.getElementById('form-generate-laporan').addEventListener('submit', function(e) {
             const reportType = document.getElementById('report_type').value;
             const dateFrom = document.getElementById('date_from').value;
@@ -611,6 +611,37 @@
                 document.getElementById('date_to').value = dateFrom;
                 return;
             }
+
+            // Show generating notification
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+            submitButton.disabled = true;
+            
+            // Add notification to show that report is being generated
+            setTimeout(() => {
+                if (window.showNotification) {
+                    window.showNotification(
+                        'success', 
+                        'Laporan berhasil dibuat! File sedang didownload...', 
+                        true, 
+                        '/admin/transaksi',
+                        'ke halaman transaksi'
+                    );
+                }
+            }, 1000); // Show after 1 second
+
+            // Reset button after delay
+            setTimeout(() => {
+                submitButton.innerHTML = originalText;
+                submitButton.disabled = false;
+                hideModal('modal-generate');
+                
+                // Refresh the page after short delay to show new report in list
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }, 3000);
         });
     });
 </script>

@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barang;
+use App\Models\SubBarang;
+use App\Models\Peminjaman;
 use App\Models\Kategori;
 use App\Models\Ruangan;
 use App\Models\Transaksi;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -36,27 +39,66 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function getData()
+    {
+        try {
+            $stats = $this->getDashboardStats();
+            $recentTransactions = $this->getRecentTransactions();
+            $lowStockItems = $this->getLowStockItems();
+
+            return response()->json([
+                'success' => true,
+                'stats' => $stats,
+                'recentTransactions' => $recentTransactions,
+                'lowStockItems' => $lowStockItems
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading dashboard data',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
     protected function getDashboardStats()
     {
         return Cache::remember('dashboard_stats', now()->addMinutes(self::CACHE_TIME_STATS), function () {
-            $stats = $this->calculateBasicStats();
-            return array_merge($stats, $this->calculateTransactionStats());
+            $basicStats = $this->calculateBasicStats();
+            $transactionStats = $this->calculateTransactionStats();
+            return array_merge($basicStats, $transactionStats);
         });
     }
 
     protected function calculateBasicStats()
     {
-        $totalBarang = Barang::count();
+        // Hitung total sub barang
+        $totalSubBarang = SubBarang::count();
+        
+        // Hitung sub barang yang sedang dipinjam
+        $borrowedSubBarang = DB::select("
+            SELECT COUNT(DISTINCT sub_barang.id) as count
+            FROM sub_barang 
+            WHERE EXISTS (
+                SELECT 1 FROM peminjaman 
+                WHERE JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))
+                AND peminjaman.status IN ('pending', 'dipinjam', 'dikonfirmasi')
+            )
+        ")[0]->count ?? 0;
+
         $totalKategori = Kategori::count();
         $totalRuangan = Ruangan::count();
         $lastMonth = Carbon::now()->subMonth();
         
+        // Hitung perubahan sub barang
+        $totalSubBarangLastMonth = SubBarang::where('created_at', '<=', $lastMonth)->count();
+        
         return [
-            'total_items' => $totalBarang,
-            'borrowed_items' => Transaksi::where('status', 'Dipinjam')->count(),
+            'total_items' => $totalSubBarang,
+            'borrowed_items' => $borrowedSubBarang,
             'items_change' => $this->calculatePercentageChange(
-                Barang::where('created_at', '<=', $lastMonth)->count(),
-                $totalBarang
+                $totalSubBarangLastMonth,
+                $totalSubBarang
             ),
             'categories' => $totalKategori,
             'categories_change' => $this->calculatePercentageChange(
@@ -68,13 +110,25 @@ class DashboardController extends Controller
                 Ruangan::where('created_at', '<=', $lastMonth)->count(),
                 $totalRuangan
             ),
-            'borrowed_change' => $this->calculatePercentageChange(
-                Transaksi::where('status', 'Dipinjam')
-                    ->where('created_at', '<=', $lastMonth)
-                    ->count(),
-                Transaksi::where('status', 'Dipinjam')->count()
-            )
+            'borrowed_change' => $this->calculateBorrowedChange($borrowedSubBarang, $lastMonth)
         ];
+    }
+
+    protected function calculateBorrowedChange($currentBorrowed, $lastMonth)
+    {
+        // Hitung jumlah sub barang yang dipinjam bulan lalu
+        $borrowedLastMonth = DB::select("
+            SELECT COUNT(DISTINCT sub_barang.id) as count
+            FROM sub_barang 
+            WHERE EXISTS (
+                SELECT 1 FROM peminjaman 
+                WHERE JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))
+                AND peminjaman.status IN ('pending', 'dipinjam', 'dikonfirmasi')
+                AND peminjaman.created_at <= ?
+            )
+        ", [$lastMonth])[0]->count ?? 0;
+
+        return $this->calculatePercentageChange($borrowedLastMonth, $currentBorrowed);
     }
 
     protected function calculateTransactionStats()
@@ -82,37 +136,51 @@ class DashboardController extends Controller
         $today = Carbon::today();
         
         return [
-            'total_transactions' => Transaksi::count(),
-            'active_loans' => Transaksi::where('status', 'Dipinjam')->count(),
-            'overdue' => Transaksi::where('status', 'Terlambat')->count(),
-            'today_transactions' => Transaksi::whereDate('created_at', $today)->count(),
-            'pending_returns' => Transaksi::where('status', 'Menunggu Pengembalian')->count()
+            'total_transactions' => Peminjaman::count(),
+            'active_loans' => Peminjaman::whereIn('status', ['dipinjam', 'dikonfirmasi'])->count(),
+            'pending_loans' => Peminjaman::where('status', 'pending')->count(),
+            'today_transactions' => Peminjaman::whereDate('created_at', $today)->count(),
+            'completed_loans' => Peminjaman::where('status', 'dikembalikan')->count()
         ];
     }
 
     protected function getRecentTransactions()
     {
         return Cache::remember('recent_transactions', now()->addMinutes(self::CACHE_TIME_TRANSACTIONS), function () {
-            return Transaksi::with(['barang', 'user'])
+            $transactions = Peminjaman::with(['barang', 'user'])
                 ->latest()
                 ->limit(self::RECENT_TRANSACTIONS_LIMIT)
                 ->get()
-                ->map(function ($transaksi) {
+                ->map(function ($peminjaman, $index) {
+                    // Hitung jumlah sub barang yang dipinjam
+                    $subBarangCount = 0;
+                    if ($peminjaman->sub_barang_ids) {
+                        // sub_barang_ids sudah di-cast sebagai array di model
+                        $subBarangIds = is_array($peminjaman->sub_barang_ids) 
+                            ? $peminjaman->sub_barang_ids 
+                            : json_decode($peminjaman->sub_barang_ids, true);
+                        $subBarangCount = is_array($subBarangIds) ? count($subBarangIds) : 0;
+                    }
+
                     return [
-                        'id' => $transaksi->id,
-                        'item_name' => $transaksi->barang->nama_barang ?? 'Barang tidak ditemukan',
-                        'peminjam' => $transaksi->user->name ?? $transaksi->peminjam,
-                        'date' => $transaksi->created_at->translatedFormat('d M Y'),
-                        'status' => $this->normalizeStatus($transaksi->status),
-                        'tanggal_kembali' => $transaksi->tanggal_kembali 
-                            ? Carbon::parse($transaksi->tanggal_kembali)->translatedFormat('d M Y') 
+                        'id' => $index + 1, // ID berurutan mulai dari 1
+                        'original_id' => $peminjaman->id, // ID asli untuk referensi
+                        'item_name' => $peminjaman->barang->nama ?? 'Barang tidak ditemukan',
+                        'peminjam' => $peminjaman->user->name ?? 'User tidak ditemukan',
+                        'quantity' => $subBarangCount,
+                        'date' => $peminjaman->created_at->translatedFormat('d M Y'),
+                        'status' => $this->normalizeStatus($peminjaman->status),
+                        'tanggal_kembali' => $peminjaman->tanggal_kembali 
+                            ? Carbon::parse($peminjaman->tanggal_kembali)->translatedFormat('d M Y') 
                             : '-',
-                        'is_late' => $transaksi->tanggal_kembali 
-                            ? Carbon::now()->gt(Carbon::parse($transaksi->tanggal_kembali))
+                        'is_late' => $peminjaman->tanggal_kembali 
+                            ? Carbon::now()->gt(Carbon::parse($peminjaman->tanggal_kembali))
                             : false
                     ];
                 })
                 ->toArray();
+            
+            return $transactions;
         });
     }
 
@@ -120,20 +188,29 @@ class DashboardController extends Controller
     {
         return Cache::remember('low_stock_items', now()->addMinutes(self::CACHE_TIME_LOW_STOCK), function () {
             return Barang::with(['kategori', 'ruangan'])
-                ->where('jumlah', '<=', self::LOW_STOCK_THRESHOLD)
-                ->orderBy('jumlah')
+                ->withCount(['subBarang as available_stock' => function ($query) {
+                    $query->whereIn('kondisi', ['baik', 'rusak_ringan'])
+                          ->whereNotExists(function ($subQuery) {
+                              $subQuery->select(\DB::raw(1))
+                                       ->from('peminjaman')
+                                       ->whereRaw('JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))')
+                                       ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'dikonfirmasi']);
+                          });
+                }])
+                ->having('available_stock', '<=', self::LOW_STOCK_THRESHOLD)
+                ->orderBy('available_stock')
                 ->limit(self::LOW_STOCK_ITEMS_LIMIT)
                 ->get()
                 ->map(function ($barang) {
                     return [
                         'id' => $barang->id,
-                        'code' => $barang->kode_barang,
-                        'name' => $barang->nama_barang,
+                        'code' => $barang->kode ?? $barang->kode_barang,
+                        'name' => $barang->nama ?? $barang->nama_barang,
                         'category' => $barang->kategori->nama ?? 'Tidak ada kategori',
                         'room' => $barang->ruangan->nama_ruangan ?? 'Tidak ada ruangan',
-                        'stock' => $barang->jumlah,
-                        'min_stock' => $barang->stok_minimal ?? 5,
-                        'is_critical' => $barang->jumlah <= ($barang->stok_minimal ?? 3)
+                        'stock' => $barang->available_stock,
+                        'min_stock' => 5, // Default minimum stock
+                        'is_critical' => $barang->available_stock <= 3 // Critical if 3 or less
                     ];
                 })
                 ->toArray();
@@ -152,14 +229,14 @@ class DashboardController extends Controller
     protected function normalizeStatus($status)
     {
         $statusMap = [
-            'Dipinjam' => 'Dipinjam',
-            'Dikembalikan' => 'Dikembalikan',
-            'Terlambat' => 'Terlambat',
-            'Diperbaiki' => 'Diperbaiki',
-            'Pending' => 'Menunggu Persetujuan',
-            'WaitingReturn' => 'Menunggu Pengembalian'
+            'pending' => 'Menunggu Persetujuan',
+            'dipinjam' => 'Dipinjam',
+            'dikonfirmasi' => 'Dikonfirmasi',
+            'dikembalikan' => 'Dikembalikan',
+            'terlambat' => 'Terlambat',
+            'rusak' => 'Rusak'
         ];
         
-        return $statusMap[$status] ?? $status;
+        return $statusMap[$status] ?? ucfirst($status);
     }
 }

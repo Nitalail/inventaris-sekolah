@@ -7,10 +7,11 @@ use Illuminate\Http\Request;
 use App\Models\Kategori;
 use App\Models\Ruangan;
 use App\Models\Barang;
-use App\Models\Transaksi;
+use App\Models\SubBarang;
+use App\Models\Peminjaman;
 use App\Models\Report;
-use PDF;
-use Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -31,7 +32,7 @@ class LaporanController extends Controller
     public function generate(Request $request)
     {
         $request->validate([
-            'report_type' => 'required|in:inventory,transaction,maintenance,procurement,room,room_inventory',
+            'report_type' => 'required|in:inventory,transaction,room',
             'format' => 'required|in:pdf,excel',
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date|after_or_equal:date_from',
@@ -62,42 +63,64 @@ class LaporanController extends Controller
                 $judul = 'Laporan Inventaris Per Ruangan';
                 $viewTemplate = 'admin.laporan.room_pdf';
                 break;
-
-            case 'room_inventory':
-                $data = $this->getRoomInventoryData($request);
-                $judul = 'Laporan Inventaris Ruangan';
-                $viewTemplate = 'admin.laporan.room_inventory_pdf';
-                break;
         }
 
         $tanggal = now()->format('d F Y');
         $fileName = 'reports/' . Str::slug($judul) . '_' . now()->timestamp . '.' . $request->format;
 
+        // Ensure reports directory exists
+        Storage::makeDirectory('public/reports');
+
         if ($request->format == 'pdf') {
-            $pdf = PDF::loadView($viewTemplate, [
-                'data' => $data,
-                'judul' => $judul,
-                'tanggal' => $tanggal,
-                'date_from' => $request->date_from,
-                'date_to' => $request->date_to,
-                'report_type' => $request->report_type,
-                'filters' => [
-                    'category' => $request->category ? Kategori::find($request->category)->nama : null,
-                    'room' => $request->room ? Ruangan::find($request->room)->nama_ruangan : null,
-                    'status' => $request->status,
-                ],
-            ]);
+            try {
+                $pdf = Pdf::loadView($viewTemplate, [
+                    'data' => $data,
+                    'judul' => $judul,
+                    'tanggal' => $tanggal,
+                    'date_from' => $request->date_from,
+                    'date_to' => $request->date_to,
+                    'report_type' => $request->report_type,
+                    'filters' => [
+                        'category' => $request->category ? Kategori::find($request->category)->nama : null,
+                        'room' => $request->room ? Ruangan::find($request->room)->nama_ruangan : null,
+                        'status' => $request->status,
+                    ],
+                ]);
 
-            Storage::put('public/' . $fileName, $pdf->output());
-            $this->saveReportRecord($request, $judul, $fileName);
+                // Save to storage with error handling
+                $stored = Storage::put('public/' . $fileName, $pdf->output());
+                
+                if ($stored) {
+                    $this->saveReportRecord($request, $judul, $fileName);
+                } else {
+                    throw new \Exception('Failed to save PDF to storage');
+                }
 
-            return $pdf->download("{$judul} - {$tanggal}.pdf");
+                return $pdf->download("{$judul} - {$tanggal}.pdf")
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename="' . "{$judul} - {$tanggal}.pdf" . '"');
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+            }
         } else {
-            $export = new \App\Exports\LaporanExport($data, $judul, $request->report_type);
-            Excel::store($export, 'public/' . $fileName);
-            $this->saveReportRecord($request, $judul, $fileName);
+            try {
+                $export = new \App\Exports\LaporanExport($data, $judul, $request->report_type);
+                
+                // Save to storage with error handling
+                $stored = Excel::store($export, 'public/' . $fileName);
+                
+                if ($stored) {
+                    $this->saveReportRecord($request, $judul, $fileName);
+                } else {
+                    throw new \Exception('Failed to save Excel to storage');
+                }
 
-            return Excel::download($export, "{$judul} - {$tanggal}.xlsx");
+                return Excel::download($export, "{$judul} - {$tanggal}.xlsx")
+                    ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                    ->header('Content-Disposition', 'attachment; filename="' . "{$judul} - {$tanggal}.xlsx" . '"');
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Gagal generate Excel: ' . $e->getMessage());
+            }
         }
     }
 
@@ -109,7 +132,7 @@ class LaporanController extends Controller
         return [
             'total_reports' => Report::count(),
             'monthly_reports' => Report::whereMonth('report_date', $currentMonth)->whereYear('report_date', $currentYear)->count(),
-            'available_formats' => 3, // PDF, Excel, CSV
+            'available_formats' => 2, // PDF, Excel
             'pdf_count' => Report::where('file_format', 'pdf')->count(),
             'excel_count' => Report::where('file_format', 'excel')->count(),
             'most_active_user' => DB::table('reports')->select('users.name', DB::raw('COUNT(reports.id) as count'))->join('users', 'reports.user_id', '=', 'users.id')->groupBy('users.name')->orderBy('count', 'desc')->first(),
@@ -118,151 +141,196 @@ class LaporanController extends Controller
 
     protected function saveReportRecord($request, $judul, $filePath)
     {
-        Report::create([
-            'report_name' => $judul . ' - ' . now()->format('d M Y'),
-            'report_type' => $request->report_type,
-            'report_date' => now(),
-            'file_format' => $request->format,
-            'file_path' => $filePath,
-            'user_id' => auth()->id(),
-        ]);
+        try {
+            Report::create([
+                'report_name' => $judul . ' - ' . now()->format('d M Y'),
+                'report_type' => $request->report_type,
+                'report_date' => now(),
+                'file_format' => $request->format,
+                'file_path' => $filePath,
+                'user_id' => auth()->id(),
+            ]);
+            
+            // Clean up old reports (keep only last 50 reports)
+            $this->cleanupOldReports();
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to save report record: ' . $e->getMessage());
+        }
+    }
+
+    protected function cleanupOldReports()
+    {
+        try {
+            // Get reports older than 50 most recent
+            $oldReports = Report::orderBy('created_at', 'desc')
+                ->skip(50)
+                ->take(100)
+                ->get();
+
+            foreach ($oldReports as $report) {
+                // Delete physical file
+                if (Storage::exists('public/' . $report->file_path)) {
+                    Storage::delete('public/' . $report->file_path);
+                }
+                
+                // Delete database record
+                $report->delete();
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to cleanup old reports: ' . $e->getMessage());
+        }
     }
 
     protected function getInventoryData($request)
     {
-        return Barang::with(['kategori', 'ruangan'])
-            ->when($request->category, fn($q) => $q->where('kategori_id', $request->category))
-            ->when($request->room, fn($q) => $q->where('ruangan_id', $request->room))
-            ->when($request->date_from && $request->date_to, function ($q) use ($request) {
-                $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
-            })
-            ->get();
-    }
+        // Menggunakan SubBarang sebagai data inventaris utama
+        $query = SubBarang::with(['barang.kategori', 'barang.ruangan'])
+            ->join('barang', 'sub_barang.barang_id', '=', 'barang.id')
+            ->select('sub_barang.*', 'barang.nama as nama_barang', 'barang.kode as kode_barang', 'barang.satuan', 'barang.sumber_dana', 'barang.deskripsi as barang_deskripsi');
 
-    protected function getTransactionData($request)
-    {
-        return DB::table('peminjaman')
-            ->join('barang', 'peminjaman.barang_id', '=', 'barang.id')
-            ->join('users', 'peminjaman.user_id', '=', 'users.id')
-            ->select('peminjaman.id', 'barang.kode as kode_barang', 'barang.nama as nama_barang', 'users.name as peminjam', 'peminjaman.tanggal_pinjam', 'peminjaman.tanggal_kembali', 'peminjaman.status', 'peminjaman.jumlah')
-            ->when($request->date_from && $request->date_to, function ($query) use ($request) {
-                return $query->whereBetween('peminjaman.tanggal_pinjam', [$request->date_from, $request->date_to]);
-            })
-            ->when($request->status, function ($query, $status) {
-                return $query->where('peminjaman.status', $status);
-            })
-            ->when($request->room, function ($query, $room) {
-                return $query->where('barang.ruangan_id', $room);
-            })
-            ->get()
-            ->map(function ($item) {
-                $item->tanggal_pinjam = date('d/m/Y', strtotime($item->tanggal_pinjam));
-                $item->tanggal_kembali = $item->tanggal_kembali ? date('d/m/Y', strtotime($item->tanggal_kembali)) : '-';
-                return $item;
-            });
-    }
-
-    protected function getMaintenanceData($request)
-    {
-        return Pemeliharaan::with(['barang'])
-            ->when($request->date_from && $request->date_to, function ($q) use ($request) {
-                $q->whereBetween('maintenance_date', [$request->date_from, $request->date_to]);
-            })
-            ->get();
-    }
-
-    protected function getProcurementData($request)
-    {
-        return Pengadaan::with(['barang'])
-            ->when($request->date_from && $request->date_to, function ($q) use ($request) {
-                $q->whereBetween('procurement_date', [$request->date_from, $request->date_to]);
-            })
-            ->get();
-    }
-
-    protected function getRoomData($request)
-    {
-        $query = Ruangan::with([
-            'barangs' => function ($q) use ($request) {
-                if ($request->category) {
-                    $q->where('kategori_id', $request->category);
-                }
-
-                if ($request->date_from && $request->date_to) {
-                    $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
-                }
-
-                $q->with('kategori');
-            },
-        ]);
-
-        if ($request->room) {
-            $query->where('id', $request->room);
-        }
-
-        return $query->get();
-    }
-
-    protected function getRoomInventoryData($request)
-    {
-        $query = Ruangan::select('ruangan.*', DB::raw('COUNT(barang.id) as total_barang_aktual'), DB::raw('SUM(CASE WHEN barang.kondisi = "baik" THEN 1 ELSE 0 END) as barang_baik'), DB::raw('SUM(CASE WHEN barang.kondisi = "rusak" THEN 1 ELSE 0 END) as barang_rusak'), DB::raw('SUM(CASE WHEN barang.kondisi = "hilang" THEN 1 ELSE 0 END) as barang_hilang'), DB::raw('GROUP_CONCAT(DISTINCT kategori.nama) as kategori_list'))->leftJoin('barang', 'ruangan.id', '=', 'barang.ruangan_id')->leftJoin('kategori', 'barang.kategori_id', '=', 'kategori.id')->groupBy('ruangan.id', 'ruangan.kode_ruangan', 'ruangan.nama_ruangan', 'ruangan.kapasitas', 'ruangan.jumlah_barang', 'ruangan.status', 'ruangan.deskripsi', 'ruangan.created_at', 'ruangan.updated_at');
-
-        if ($request->status) {
-            $query->where('ruangan.status', $request->status);
-        }
-
-        if ($request->room) {
-            $query->where('ruangan.id', $request->room);
-        }
-
+        // Filter berdasarkan kategori
         if ($request->category) {
             $query->where('barang.kategori_id', $request->category);
         }
 
-        if ($request->date_from && $request->date_to) {
-            $query->whereBetween('ruangan.created_at', [$request->date_from, $request->date_to]);
+        // Filter berdasarkan ruangan
+        if ($request->room) {
+            $query->where('barang.ruangan_id', $request->room);
         }
 
-        $rooms = $query->get()->map(function ($room) {
-            $room->persentase_kapasitas = $room->kapasitas > 0 ? round(($room->total_barang_aktual / $room->kapasitas) * 100, 2) : 0;
+        // Filter berdasarkan tanggal
+        if ($request->date_from && $request->date_to) {
+            $query->whereBetween('sub_barang.created_at', [$request->date_from, $request->date_to]);
+        }
 
-            if ($room->persentase_kapasitas > 100) {
-                $room->status_kapasitas = 'Overload';
-            } elseif ($room->persentase_kapasitas > 80) {
-                $room->status_kapasitas = 'Hampir Penuh';
-            } elseif ($room->persentase_kapasitas > 50) {
-                $room->status_kapasitas = 'Normal';
-            } else {
-                $room->status_kapasitas = 'Kosong/Sedikit';
-            }
-
-            $room->tanggal_dibuat = date('d/m/Y', strtotime($room->created_at));
-
-            return $room;
-        });
-
-        return $rooms;
+        return $query->orderBy('barang.kode')
+                    ->orderBy('sub_barang.kode')
+                    ->get();
     }
 
-    public function getRoomInventoryStats($request = null)
+    protected function getTransactionData($request)
     {
-        $query = Ruangan::select(DB::raw('COUNT(*) as total_ruangan'), DB::raw('SUM(CASE WHEN status = "aktif" THEN 1 ELSE 0 END) as ruangan_aktif'), DB::raw('SUM(CASE WHEN status = "perbaikan" THEN 1 ELSE 0 END) as ruangan_perbaikan'), DB::raw('SUM(CASE WHEN status = "tidak_aktif" THEN 1 ELSE 0 END) as ruangan_tidak_aktif'), DB::raw('SUM(kapasitas) as total_kapasitas'), DB::raw('SUM(jumlah_barang) as total_barang_terdaftar'));
+        $query = DB::table('peminjaman')
+            ->join('barang', 'peminjaman.barang_id', '=', 'barang.id')
+            ->join('users', 'peminjaman.user_id', '=', 'users.id')
+            ->select(
+                'peminjaman.id',
+                'barang.kode as kode_barang',
+                'barang.nama as nama_barang',
+                'users.name as peminjam',
+                'peminjaman.tanggal_pinjam',
+                'peminjaman.tanggal_kembali',
+                'peminjaman.status',
+                'peminjaman.jumlah',
+                'peminjaman.keperluan',
+                'peminjaman.catatan',
+                'peminjaman.sub_barang_ids'
+            );
 
-        if ($request && $request->date_from && $request->date_to) {
+        // Filter berdasarkan tanggal
+        if ($request->date_from && $request->date_to) {
+            $query->whereBetween('peminjaman.tanggal_pinjam', [$request->date_from, $request->date_to]);
+        }
+
+        // Filter berdasarkan status
+        if ($request->status) {
+            $query->where('peminjaman.status', $request->status);
+        }
+
+        // Filter berdasarkan ruangan
+        if ($request->room) {
+            $query->where('barang.ruangan_id', $request->room);
+        }
+
+        return $query->get()->map(function ($item) {
+            $item->tanggal_pinjam = date('d/m/Y', strtotime($item->tanggal_pinjam));
+            $item->tanggal_kembali = $item->tanggal_kembali ? date('d/m/Y', strtotime($item->tanggal_kembali)) : '-';
+            
+            // Decode sub barang IDs dan ambil kode
+            if ($item->sub_barang_ids) {
+                $subBarangIds = json_decode($item->sub_barang_ids, true);
+                if ($subBarangIds) {
+                    $subBarangCodes = DB::table('sub_barang')
+                        ->whereIn('id', $subBarangIds)
+                        ->pluck('kode')
+                        ->toArray();
+                    $item->sub_barang_codes = implode(', ', $subBarangCodes);
+                } else {
+                    $item->sub_barang_codes = '-';
+                }
+            } else {
+                $item->sub_barang_codes = '-';
+            }
+            
+            return $item;
+        });
+    }
+
+    protected function getRoomData($request)
+    {
+        $query = Ruangan::with(['barangs.subBarang', 'barangs.kategori']);
+
+        // Filter berdasarkan ruangan spesifik
+        if ($request->room) {
+            $query->where('id', $request->room);
+        }
+
+        // Filter berdasarkan status ruangan
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter berdasarkan tanggal
+        if ($request->date_from && $request->date_to) {
             $query->whereBetween('created_at', [$request->date_from, $request->date_to]);
         }
 
-        $stats = $query->first();
+        return $query->get()->map(function ($room) {
+            // Hitung total sub barang per ruangan
+            $totalSubBarang = $room->barangs->sum(function ($barang) {
+                return $barang->subBarang->count();
+            });
 
-        $totalBarangAktual = DB::table('barang')
-            ->when($request && $request->date_from && $request->date_to, function ($q) use ($request) {
-                $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
-            })
-            ->count();
+            // Hitung kondisi sub barang
+            $kondisiCounts = [
+                'baik' => 0,
+                'rusak_ringan' => 0,
+                'rusak_berat' => 0
+            ];
 
-        $stats->total_barang_aktual = $totalBarangAktual;
-        $stats->persentase_penggunaan = $stats->total_kapasitas > 0 ? round(($totalBarangAktual / $stats->total_kapasitas) * 100, 2) : 0;
+            foreach ($room->barangs as $barang) {
+                foreach ($barang->subBarang as $subBarang) {
+                    if (isset($kondisiCounts[$subBarang->kondisi])) {
+                        $kondisiCounts[$subBarang->kondisi]++;
+                    }
+                }
+            }
 
-        return $stats;
+            // Ambil kategori yang ada di ruangan dengan cara yang lebih explisit
+            $kategoris = [];
+            $jenisBarang = [];
+            foreach ($room->barangs as $barang) {
+                if ($barang->kategori && $barang->kategori->nama) {
+                    $kategoris[] = $barang->kategori->nama;
+                }
+                // Ambil nama barang untuk kolom jenis barang
+                if ($barang->nama) {
+                    $jenisBarang[] = $barang->nama;
+                }
+            }
+            $kategoris = array_unique($kategoris);
+            $jenisBarang = array_unique($jenisBarang);
+
+            $room->total_sub_barang = $totalSubBarang;
+            $room->barang_baik = $kondisiCounts['baik'];
+            $room->barang_rusak_ringan = $kondisiCounts['rusak_ringan'];
+            $room->barang_rusak_berat = $kondisiCounts['rusak_berat'];
+            $room->kategori_list = !empty($kategoris) ? implode(', ', $kategoris) : 'Belum ada kategori';
+            $room->total_barang_types = $room->barangs->count();
+            $room->jenis_barang_list = !empty($jenisBarang) ? implode(', ', $jenisBarang) : 'Belum ada barang';
+
+            return $room;
+        });
     }
 }

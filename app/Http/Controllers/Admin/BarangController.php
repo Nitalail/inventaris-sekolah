@@ -34,9 +34,7 @@ class BarangController extends Controller
 
         // dd($subBarangs);
 
-        return view('admin.barang', compact(
-            'barangs', 'kategori', 'ruangan', 'tahun_perolehan', 'filters', 'perPage', 'subBarangs'
-        ));
+        return view('admin.barang', compact('barangs', 'kategori', 'ruangan', 'tahun_perolehan', 'filters', 'perPage', 'subBarangs'));
     }
 
     public function create()
@@ -83,24 +81,23 @@ class BarangController extends Controller
     }
 
     public function update(Request $request, Barang $barang)
-{
-    $validated = $request->validate([
-        'kode' => 'required|string',
-        'nama' => 'required|string',
-        'kategori_id' => 'required|exists:kategoris,id',
-        'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
-        'jumlah' => 'required|integer|min:1',
-        'ruangan_id' => 'required|exists:ruangan,id',
-        'tahun_perolehan' => 'required|integer',
-        'sumber_dana' => 'required|string',
-        'deskripsi' => 'nullable|string',
-    ]);
+    {
+        $validated = $request->validate([
+            'kode' => 'required|string',
+            'nama' => 'required|string',
+            'kategori_id' => 'required|exists:kategoris,id',
+            'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
+            'jumlah' => 'required|integer|min:1',
+            'ruangan_id' => 'required|exists:ruangan,id',
+            'tahun_perolehan' => 'required|integer',
+            'sumber_dana' => 'required|string',
+            'deskripsi' => 'nullable|string',
+        ]);
 
-    $barang->update($validated);
+        $barang->update($validated);
 
-    return redirect()->back()->with('success', 'Data barang berhasil diperbarui!');
-}
-
+        return redirect()->back()->with('success', 'Data barang berhasil diperbarui!');
+    }
 
     public function destroy($id)
     {

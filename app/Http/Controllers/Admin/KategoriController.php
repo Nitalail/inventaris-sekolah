@@ -14,12 +14,10 @@ class KategoriController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('nama', 'like', '%' . $search . '%')
-                  ->orWhere('kode', 'like', '%' . $search . '%');
+            $query->where('nama', 'like', '%' . $search . '%')->orWhere('kode', 'like', '%' . $search . '%');
         }
 
         $kategoris = $query->paginate(10);
-
 
         return view('admin.kategori', compact('kategoris'));
     }

@@ -238,11 +238,6 @@
                         <i class="fas fa-plus"></i>
                         <span>Tambah Barang</span>
                     </button>
-
-                    <button class="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white px-5 py-2.5 rounded-lg flex items-center space-x-2 transition-slow shadow-md hover:shadow-lg" @click="showAddSubModal = true">
-                        <i class="fas fa-plus"></i>
-                        <span>Tambah Sub Barang</span>
-                    </button>
                 </div>
             </div>
 
@@ -265,7 +260,7 @@
             @endif
 
             <!-- Error Alert -->
-            @if($errors->any()))
+            @if($errors->any())
             <div class="mb-6 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm flex items-start" x-data="{ show: true }" x-show="show" @click.away="show = false" style="cursor: pointer;">
                 <div class="flex-shrink-0">
                     <div class="w-8 h-8 bg-gradient-to-r from-red-500 to-rose-500 rounded-full flex items-center justify-center text-white">
@@ -349,6 +344,7 @@
                 </div>
             </div>
 
+            
             <!-- Barang Table -->
             <div class="bg-white/90 glass rounded-xl shadow-sm border border-gray-200/70 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200/70 flex items-center justify-between bg-gray-50/50">
@@ -368,7 +364,6 @@
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Kode</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Nama Barang</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Kategori</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Kondisi</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Jumlah</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Ruangan</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Aksi</th>
@@ -381,12 +376,12 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $barang->kode }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $barang->nama }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $barang->kategori->nama ?? '-' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <span class="badge {{ $barang->getKondisiBadgeClass() }}">
-                                            {{ $barang->kondisi_name }}
-                                        </span>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ $barang->jumlah }} {{ $barang->satuan }}
+                                        @if($barang->sub_barang_count > 0)
+                                            <span class="text-xs text-primary-600 ml-1">({{ $barang->sub_barang_count }} sub)</span>
+                                        @endif
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $barang->jumlah }} {{ $barang->satuan }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $barang->ruangan->nama_ruangan ?? '-' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div class="flex space-x-2">
@@ -467,13 +462,6 @@
                 <form method="POST" action="{{ route('admin.barang.store') }}" class="p-6">
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="kondisi" class="block text-sm font-medium text-gray-700 mb-1">Barang <span class="text-red-500">*</span></label>
-                            <select name="kondisi" id="kondisi" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" required>
-                                <option value="">Lenovo i3</option>
-                                <option value="baik">Kamera DSLR</option>
-                            </select>
-                        </div>
                         <div>
                             <label for="kode" class="block text-sm font-medium text-gray-700 mb-1">Kode Barang <span class="text-red-500">*</span></label>
                             <input type="text" name="kode" id="kode" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" placeholder="Masukkan kode barang" required>
@@ -585,16 +573,18 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="kondisi" class="block text-sm font-medium text-gray-700 mb-1">Barang <span class="text-red-500">*</span></label>
-                            <select name="barang_id" id="barang_id" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" required>
+                            {{-- <select name="barang_id" id="barang_id" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" required>
                                 <option value="">Pilih Barang</option>
                                 @foreach($barangs as $barang)
                                     <option value="{{ $barang->id }}">{{ $barang->nama }}</option>
                                 @endforeach
-                            </select>
+                            </select> --}}
+                            <input type="text" name="barang_id" id="barang_id" class="w-full border hidden border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" readonly required>
+                            <input type="text" name="" id="barang_nama" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" readonly required>
                         </div>
                         <div>
                             <label for="kode" class="block text-sm font-medium text-gray-700 mb-1">Kode Barang <span class="text-red-500">*</span></label>
-                            <input type="text" name="kode" id="kode" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" placeholder="Masukkan kode barang" required>
+                            <input type="text" name="kode" id="kode_sub_barang" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" placeholder="Masukkan kode barang" required>
                         </div>
                         
                         <div>
@@ -748,13 +738,13 @@
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-show="showViewModal" x-cloak>
             <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity transition-slow" @click="showViewModal = false"></div>
             
-            <div class="relative glass rounded-xl shadow-2xl border border-gray-200/70 w-full max-w-2xl transform transition-all"
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+            <div class="relative glass rounded-xl shadow-2xl border border-gray-200/70 w-full max-w-4xl h-auto max-h-[90vh] overflow-y-auto transform transition-all"
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                 <div class="px-6 py-4 border-b border-gray-200/70 flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-800">Detail Barang</h3>
                     <button type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none transition-slow" @click="showViewModal = false">
@@ -763,7 +753,7 @@
                 </div>
                 
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <!-- Kolom Kiri -->
                         <div class="space-y-4">
                             <div>
@@ -782,28 +772,28 @@
                                         <span class="text-sm font-medium text-gray-900" x-text="viewItem.kategori?.nama || '-'"></span>
                                     </div>
                                     <div class="flex justify-between">
-                                        <span class="text-sm text-gray-600">Jumlah:</span>
+                                        <span class="text-sm text-gray-600">Jumlah Total:</span>
                                         <span class="text-sm font-medium text-gray-900" x-text="`${viewItem.jumlah} ${viewItem.satuan}`"></span>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div>
+                            {{-- <div>
                                 <h4 class="text-sm font-medium text-gray-500 mb-2 border-b pb-1">Kondisi</h4>
                                 <div class="flex justify-between items-center">
                                     <span class="text-sm text-gray-600">Status:</span>
                                     <span class="badge" 
-                                          :class="{
-                                              'badge-success': viewItem.kondisi === 'baik',
-                                              'badge-warning': viewItem.kondisi === 'rusak_ringan',
-                                              'badge-danger': viewItem.kondisi === 'rusak_berat'
-                                          }"
-                                          x-text="viewItem.kondisi === 'baik' ? 'Baik' : 
-                                                 viewItem.kondisi === 'rusak_ringan' ? 'Rusak Ringan' : 
-                                                 'Rusak Berat'">
+                                        :class="{
+                                            'badge-success': viewItem.kondisi === 'baik',
+                                            'badge-warning': viewItem.kondisi === 'rusak_ringan',
+                                            'badge-danger': viewItem.kondisi === 'rusak_berat'
+                                        }"
+                                        x-text="viewItem.kondisi === 'baik' ? 'Baik' : 
+                                                viewItem.kondisi === 'rusak_ringan' ? 'Rusak Ringan' : 
+                                                'Rusak Berat'">
                                     </span>
                                 </div>
-                            </div>
+                            </div> --}}
                         </div>
                         
                         <!-- Kolom Kanan -->
@@ -848,58 +838,78 @@
                                 <p class="text-sm text-gray-700" x-text="viewItem.deskripsi || 'Tidak ada deskripsi'"></p>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Sub Barang Section -->
+                    <div class="mt-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-lg font-semibold text-gray-800">Daftar Sub Barang</h4>
+                            <button class="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-slow shadow-sm hover:shadow-md text-sm"
+                                    @click="showViewModal = false; showAddSubModal = true; $nextTick(() => {
+                                        document.getElementById('barang_id').value = viewItem.id
+                                        document.getElementById('barang_nama').value = viewItem.nama
+                                        document.getElementById('kode_sub_barang').value = viewItem.kode
+                                        console.log(subBarangs)
+                                    })">
+                                <i class="fas fa-plus"></i>
+                                <span>Tambah Sub Barang</span>
+                            </button>
+                        </div>
 
                         <div class="overflow-x-auto rounded-lg border border-gray-200/70 shadow-sm">
                             <table class="min-w-full divide-y divide-gray-200/70">
                                 <thead class="bg-gray-50/80">
                                     <tr>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">No</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Kode</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Nama Barang</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Kategori</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Kode Sub Barang</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Kondisi</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Jumlah</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Ruangan</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Tahun Perolehan</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-gray-200/70">
-                                    @foreach($barangs as $barang)
-                                    <tr class="table-row-hover transition-colors duration-150">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $barang->kode }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $barang->nama }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $barang->kategori->nama ?? '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="badge {{ $barang->getKondisiBadgeClass() }}">
-                                                {{ $barang->kondisi_name }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $barang->jumlah }} {{ $barang->satuan }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $barang->ruangan->nama_ruangan ?? '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
-                                                <button class="text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50 transition-slow"
-                                                        @click="openViewModal({{ json_encode($barang) }})"
-                                                        title="Lihat Detail">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button class="text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50 transition-slow"
-                                                        @click="openEditModal({{ json_encode($barang) }})"
-                                                        title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <form action="{{ route('admin.barang.destroy', $barang->id) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-rose-600 hover:text-rose-900 p-2 rounded-lg hover:bg-rose-50 transition-slow" onclick="return confirm('Apakah Anda yakin ingin menghapus barang ini?')" title="Hapus">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    @endforeach
+                                <tbody class="bg-white divide-y divide-gray-200/70">
+                                    <template x-if="viewItem.sub_barang && viewItem.sub_barang.length > 0">
+                                        <template x-for="(sub, index) in viewItem.sub_barang" :key="sub.id">
+                                            <tr class="table-row-hover transition-colors duration-150">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="index + 1"></td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="sub.kode"></td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                    <span class="badge" 
+                                                        :class="{
+                                                            'badge-success': sub.kondisi === 'baik',
+                                                            'badge-warning': sub.kondisi === 'rusak_ringan',
+                                                            'badge-danger': sub.kondisi === 'rusak_berat'
+                                                        }"
+                                                        x-text="sub.kondisi === 'baik' ? 'Baik' : 
+                                                                sub.kondisi === 'rusak_ringan' ? 'Rusak Ringan' : 
+                                                                'Rusak Berat'">
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="sub.tahun_perolehan"></td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <div class="flex space-x-2">
+                                                        <button class="text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50 transition-slow"
+                                                                @click="openEditSubModal(sub)"
+                                                                title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="text-rose-600 hover:text-rose-900 p-2 rounded-lg hover:bg-rose-50 transition-slow"
+                                                                @click="openDeleteSubModal(sub)"
+                                                                title="Hapus">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                    <template x-if="!viewItem.sub_barang || viewItem.sub_barang.length === 0">
+                                        <tr>
+                                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                Tidak ada sub barang yang tersedia
+                                            </td>
+                                        </tr>
+                                    </template>
                                 </tbody>
                             </table>
                         </div>
@@ -907,13 +917,9 @@
                 </div>
                 
                 <div class="px-6 py-4 border-t border-gray-200/70 flex justify-end space-x-3">
-                    <button type="button" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-slow" @click="showViewModal = false">
+                    {{-- <button type="button" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-slow" @click="showViewModal = false">
                         Tutup
-                    </button>
-                    <button type="button" class="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:from-primary/90 hover:to-secondary/90 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-slow shadow-sm hover:shadow-md" 
-                            @click="showViewModal = false; openEditModal(viewItem)">
-                        <i class="fas fa-edit mr-2"></i> Edit Barang
-                    </button>
+                    </button> --}}
                 </div>
             </div>
         </div>
@@ -961,6 +967,8 @@
     </main>
 
     <script>
+
+
         function barangData() {
             return {
                 showAddModal: false,
@@ -1006,6 +1014,10 @@
                 },
                 
                 openViewModal(item) {
+                    console.log({
+                        ...item,
+                        subBarangs: {!! $subBarangs !!}
+                    });
                     this.viewItem = item;
                     this.showViewModal = true;
                 },

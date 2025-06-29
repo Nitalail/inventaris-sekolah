@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\Ruangan;
+use App\Models\SubBarang;
 
 class BarangController extends Controller
 {
@@ -23,12 +24,18 @@ class BarangController extends Controller
             ->orderBy('created_at', 'asc')
             ->paginate($perPage);
 
+        $subBarangs = SubBarang::with(['barang'])
+            ->whereIn('barang_id', $barangs->pluck('id'))
+            ->get();
+
         $kategori = Kategori::all();
         $ruangan = Ruangan::all();
         $tahun_perolehan = Barang::select('tahun_perolehan')->distinct()->pluck('tahun_perolehan')->sortDesc();
 
+        // dd($subBarangs);
+
         return view('admin.barang', compact(
-            'barangs', 'kategori', 'ruangan', 'tahun_perolehan', 'filters', 'perPage'
+            'barangs', 'kategori', 'ruangan', 'tahun_perolehan', 'filters', 'perPage', 'subBarangs'
         ));
     }
 

@@ -62,7 +62,7 @@ class KategoriController extends Controller
         
         // Cek apakah kategori sedang digunakan oleh barang
         if ($kategori->barang()->count() > 0) {
-            return redirect()->back()->with('error', 'Kategori tidak dapat dihapus karena masih digunakan oleh ' . $kategori->barang()->count() . ' barang.');
+            return redirect()->back()->with('error', 'Kategori tidak dapat dihapus karena masih digunakan oleh barang.');
         }
 
         $kategori->delete();

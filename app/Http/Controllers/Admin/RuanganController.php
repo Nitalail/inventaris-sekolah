@@ -65,7 +65,7 @@ class RuanganController extends Controller
         
         // Cek apakah ruangan sedang digunakan oleh barang
         if ($room->barangs()->count() > 0) {
-            return redirect()->back()->with('error', 'Ruangan tidak dapat dihapus karena masih terdapat ' . $room->barangs()->count() . ' barang di ruangan ini.');
+            return redirect()->back()->with('error', 'Ruangan tidak dapat dihapus karena masih terdapat barang di ruangan ini.');
         }
 
         $room->delete();

@@ -36,18 +36,18 @@
                  this.$el.setAttribute('data-alpine-ready', 'true');
                  
                  // Add session-based notifications only after component is ready
-                 @if(session('success'))
+        @if(session('success'))
                      this.addNotification('success', {{ json_encode(session('success')) }}, true, {{ json_encode($clickUrl ?? '/admin/transaksi') }}, {{ json_encode($actionText ?? 'ke halaman transaksi') }});
-                 @endif
-                 @if(session('error'))
+        @endif
+        @if(session('error'))
                      this.addNotification('error', {{ json_encode(session('error')) }}, false, null, '');
-                 @endif
-                 @if(session('info'))
+        @endif
+        @if(session('info'))
                      this.addNotification('info', {{ json_encode(session('info')) }}, true, {{ json_encode($clickUrl ?? '/admin/laporan') }}, {{ json_encode($actionText ?? 'lihat laporan') }});
-                 @endif
-                 @if(session('warning'))
+        @endif
+        @if(session('warning'))
                      this.addNotification('warning', {{ json_encode(session('warning')) }}, false, null, '');
-                 @endif
+        @endif
              }, 100);
          });
      ">

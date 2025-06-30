@@ -114,9 +114,9 @@ if (typeof notificationSystem === 'undefined') {
                 }
                 this.intervalId = setInterval(() => {
                     if (this.isReady) {
-                        this.loadNotificationCount();
-                        if (this.showNotifications) {
-                            this.loadNotifications();
+                    this.loadNotificationCount();
+                    if (this.showNotifications) {
+                        this.loadNotifications();
                         }
                     }
                 }, 30000);

@@ -881,8 +881,8 @@
             // Add delay to ensure page is fully loaded
             setTimeout(() => {
                 isPageReady = true;
-                setupDateConstraints();
-                updateNotificationBadge();
+            setupDateConstraints();
+            updateNotificationBadge();
             }, 200);
         });
     </script>

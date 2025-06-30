@@ -229,6 +229,24 @@
             </div>
             @endif
 
+            <!-- Error Alert for session errors -->
+            @if(session('error'))
+            <div class="mb-6 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm flex items-start" x-data="{ show: true }" x-show="show" @click.away="show = false" style="cursor: pointer;">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-gradient-to-r from-red-500 to-rose-500 rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="ml-3 flex-1">
+                    <h4 class="text-sm font-medium text-red-800">Gagal!</h4>
+                    <p class="text-sm text-red-700">{{ session('error') }}</p>
+                </div>
+                <button class="ml-3 text-red-700 hover:text-red-900 transition-slow" @click="show = false">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            @endif
+
             <!-- Error Alert -->
             @if($errors->any())
             <div class="mb-6 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm flex items-start" x-data="{ show: true }" x-show="show" @click.away="show = false" style="cursor: pointer;">
@@ -292,13 +310,13 @@
                                                     type="button">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                {{-- <form :action="'/admin/kategori/' + kategori.id" method="POST" class="inline">
+                                                <form :action="'/admin/kategori/' + kategori.id" method="POST" class="inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="text-rose-600 hover:text-rose-900 p-2 rounded-lg hover:bg-rose-50 transition-slow" onclick="return confirm('Apakah Anda yakin ingin menghapus kategori ini?')">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
-                                                </form> --}}
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>

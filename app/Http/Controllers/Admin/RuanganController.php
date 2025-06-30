@@ -62,6 +62,12 @@ class RuanganController extends Controller
     public function destroy($id)
     {
         $room = Ruangan::findOrFail($id);
+        
+        // Cek apakah ruangan sedang digunakan oleh barang
+        if ($room->barangs()->count() > 0) {
+            return redirect()->back()->with('error', 'Ruangan tidak dapat dihapus karena masih terdapat ' . $room->barangs()->count() . ' barang di ruangan ini.');
+        }
+
         $room->delete();
 
         return redirect()->back()->with('success', 'Ruangan berhasil dihapus!');

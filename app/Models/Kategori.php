@@ -11,4 +11,9 @@ class Kategori extends Model
 
     protected $fillable = ['kode', 'nama', 'deskripsi'];
 
+    // Relasi dengan Barang (one-to-many)
+    public function barang()
+    {
+        return $this->hasMany(Barang::class, 'kategori_id');
+    }
 }

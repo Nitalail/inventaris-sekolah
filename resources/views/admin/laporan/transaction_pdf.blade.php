@@ -206,47 +206,6 @@
         </table>
     </div>
 
-    <!-- Daftar item yang sedang dipinjam -->
-    @if($data->whereIn('status', ['pending', 'dipinjam'])->count() > 0)
-        <div style="margin-top: 20px; page-break-inside: avoid;">
-            <h3 style="margin: 0 0 10px 0; font-size: 12px;">Item yang Sedang Dipinjam</h3>
-            <table class="data-table" style="font-size: 8px;">
-                <thead>
-                    <tr>
-                        <th style="width: 5%;">No</th>
-                        <th style="width: 20%;">Nama Barang</th>
-                        <th style="width: 20%;">Peminjam</th>
-                        <th style="width: 10%;">Jumlah</th>
-                        <th style="width: 12%;">Tgl Pinjam</th>
-                        <th style="width: 12%;">Tgl Kembali</th>
-                        <th style="width: 10%;">Status</th>
-                        <th style="width: 11%;">Hari Tersisa</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($data->whereIn('status', ['pending', 'dipinjam']) as $item)
-                        @php
-                            $tanggalKembali = \Carbon\Carbon::createFromFormat('d/m/Y', $item->tanggal_kembali);
-                            $hariTersisa = now()->diffInDays($tanggalKembali, false);
-                        @endphp
-                        <tr>
-                            <td class="text-center">{{ $loop->iteration }}</td>
-                            <td>{{ $item->nama_barang }}</td>
-                            <td>{{ $item->peminjam }}</td>
-                            <td class="text-center">{{ $item->jumlah }}</td>
-                            <td class="text-center">{{ $item->tanggal_pinjam }}</td>
-                            <td class="text-center">{{ $item->tanggal_kembali }}</td>
-                            <td class="text-center">{{ ucfirst($item->status) }}</td>
-                            <td class="text-center" style="color: {{ $hariTersisa < 0 ? '#ef4444' : ($hariTersisa <= 3 ? '#f59e0b' : '#10b981') }};">
-                                {{ $hariTersisa >= 0 ? $hariTersisa . ' hari' : abs($hariTersisa) . ' hari terlambat' }}
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @endif
-
     <div class="footer">
         <p>Dokumen ini digenerate secara otomatis oleh sistem Inventaris Barang Sekolah</p>
         <p>Dicetak pada: {{ now()->format('d F Y, H:i') }} WIB</p>

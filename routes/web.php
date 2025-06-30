@@ -9,7 +9,6 @@ use App\Http\Controllers\Admin\RuanganController;
 use App\Http\Controllers\Admin\SubBarangController;
 use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\LaporanController;
-use App\Http\Controllers\Admin\PengaturanController;
 use App\Http\Controllers\User\DashboardUserController;
 use App\Http\Controllers\User\PeminjamanController;
 use App\Http\Controllers\User\TransaksiController;
@@ -86,10 +85,6 @@ Route::prefix('admin')
         Route::post('/laporan/generate', [LaporanController::class, 'generate'])->name('laporan.generate');
         Route::get('/laporan/download/{id}', [LaporanController::class, 'download'])->name('laporan.download');
         Route::post('barang/laporan', [BarangController::class, 'generateInventoryReport'])->name('barang.laporan');
-
-        // ⚙️ Pengaturan
-        Route::get('/pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
-        Route::post('/pengaturan', [PengaturanController::class, 'update'])->name('pengaturan.update');
 
         // 🔔 Notifications
         Route::prefix('notifications')->name('notifications.')->group(function () {

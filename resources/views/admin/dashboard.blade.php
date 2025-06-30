@@ -162,11 +162,6 @@
                 <div x-show="open" 
                     x-transition
                     class="mt-2 space-y-1 pl-13">
-                    <a href="/admin/pengaturan" 
-                    class="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-100/50 rounded-lg transition-slow">
-                        <i class="fas fa-cog w-4 mr-2 text-center"></i>
-                        Pengaturan
-                    </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" 
@@ -311,7 +306,7 @@
                                 <tbody class="bg-white divide-y divide-gray-200/70">
                                     @forelse($recentTransactions as $transaction)
                                     <tr class="table-row-hover transition-colors duration-150">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{{ $transaction['id'] }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $transaction['id'] }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $transaction['item_name'] }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $transaction['peminjam'] ?? '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $transaction['quantity'] }} item</td>

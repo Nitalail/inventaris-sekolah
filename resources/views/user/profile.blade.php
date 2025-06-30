@@ -9,6 +9,7 @@
     <link rel="shortcut icon" href="{{ asset('assets/svgs/logo-mark.svg') }}" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
         tailwind.config = {
             theme: {
@@ -135,13 +136,34 @@
                 </nav>
                 
                 <!-- User Profile -->
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold shadow-lg">
+                <div class="flex items-center gap-4" x-data="{ open: false }">
+                    <div 
+                        class="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold shadow-lg cursor-pointer"
+                        @click="open = !open"
+                    >
                         {{ substr(Auth::user()->name, 0, 1) }}{{ substr(strstr(Auth::user()->name, ' '), 1, 1) }}
                     </div>
                     <div class="hidden md:block">
                         <h3 class="font-semibold text-gray-900">{{ Auth::user()->name }}</h3>
-                        <p class="text-sm text-gray-600"> SMAN 1 Cikalong Wetan</p>
+                        <p class="text-sm text-gray-600">SMAN 1 Cikalong Wetan</p>
+                    </div>
+
+                    <!-- Dropdown Menu -->
+                    <div 
+                        x-show="open" 
+                        x-transition
+                        @click.away="open = false"
+                        class="absolute right-6 top-16 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                    >
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button 
+                                type="submit"
+                                class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-800 transition-colors"
+                            >
+                                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

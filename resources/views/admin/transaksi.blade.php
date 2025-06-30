@@ -322,11 +322,6 @@
                 </div>
 
                 <div x-show="open" x-transition class="mt-2 space-y-1 pl-13">
-                    <a href="/admin/pengaturan"
-                        class="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-100/50 rounded-lg transition-slow">
-                        <i class="fas fa-cog w-4 mr-2 text-center"></i>
-                        Pengaturan
-                    </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit"
@@ -622,10 +617,10 @@
                                             <div class="flex items-center space-x-2">
                                                 <span class="{{ $badgeClass }}">{{ $transaksi->status }}</span>
                                                 @if($isReturned)
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200 badge-final">
+                                                    {{-- <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200 badge-final">
                                                         <i class="fas fa-lock mr-1"></i>
                                                         Final
-                                                    </span>
+                                                    </span> --}}
                                                 @endif
                                             </div>
                                         </td>

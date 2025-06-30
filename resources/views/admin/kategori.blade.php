@@ -165,11 +165,6 @@
                 <div x-show="open" 
                     x-transition
                     class="mt-2 space-y-1 pl-13">
-                    <a href="/admin/pengaturan" 
-                    class="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-100/50 rounded-lg transition-slow">
-                        <i class="fas fa-cog w-4 mr-2 text-center"></i>
-                        Pengaturan
-                    </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" 

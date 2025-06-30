@@ -1,5 +1,39 @@
+@import './barang.css';
+@import './transaksi.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import './barang.css';
-@import './transaksi.css';
+
+/* Prevent modal flash during page navigation */
+.fixed[id*="Modal"]:not([data-modal-ready="true"]) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Ensure modals are initially hidden */
+#notificationModal,
+#borrowModal {
+    display: none !important;
+}
+
+/* Transition effects for modals when ready */
+[data-modal-ready="true"] {
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Alpine.js component initialization guard */
+[x-data]:not([data-alpine-ready="true"]) [x-show] {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+/* Smooth notification transitions */
+.notification-container {
+    pointer-events: none;
+}
+
+.notification-container > * {
+    pointer-events: auto;
+}

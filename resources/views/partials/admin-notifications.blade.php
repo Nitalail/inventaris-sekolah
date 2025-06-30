@@ -1,16 +1,19 @@
 <!-- Notification Bell System -->
-<div class="relative" x-data="notificationSystem">
+<div class="relative" x-data="notificationSystem" x-init="initializeComponent()">
     <button @click="toggleNotifications()" 
             class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 rounded-full transition-slow">
         <i class="fas fa-bell text-xl"></i>
-        <span x-show="unreadCount > 0" 
+        <span x-show="unreadCount > 0 && isReady" 
               x-text="unreadCount" 
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 scale-75"
+              x-transition:enter-end="opacity-100 scale-100"
               class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
         </span>
     </button>
 
     <!-- Notification Dropdown -->
-    <div x-show="showNotifications" 
+    <div x-show="showNotifications && isReady" 
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 scale-95"
          x-transition:enter-end="opacity-100 scale-100"
@@ -18,6 +21,8 @@
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
          @click.away="showNotifications = false"
+         style="display: none;"
+         x-bind:style="showNotifications && isReady ? '' : 'display: none;'"
          class="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
         
         <!-- Header -->
@@ -81,16 +86,38 @@ if (typeof notificationSystem === 'undefined') {
             notifications: [],
             unreadCount: 0,
             loading: false,
+            isReady: false,
+            intervalId: null,
+
+                         initializeComponent() {
+                 // Wait for DOM to be fully ready
+                 this.$nextTick(() => {
+                     setTimeout(() => {
+                         this.init();
+                         this.$el.setAttribute('data-alpine-ready', 'true');
+                     }, 150);
+                 });
+             },
 
             init() {
                 this.loadNotificationCount();
                 this.loadNotifications();
                 
-                // Auto refresh every 30 seconds
-                setInterval(() => {
-                    this.loadNotificationCount();
-                    if (this.showNotifications) {
-                        this.loadNotifications();
+                // Set ready state after initial load
+                setTimeout(() => {
+                    this.isReady = true;
+                }, 200);
+                
+                // Auto refresh every 30 seconds with proper cleanup
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                }
+                this.intervalId = setInterval(() => {
+                    if (this.isReady) {
+                        this.loadNotificationCount();
+                        if (this.showNotifications) {
+                            this.loadNotifications();
+                        }
                     }
                 }, 30000);
             },
@@ -125,6 +152,8 @@ if (typeof notificationSystem === 'undefined') {
             },
 
             toggleNotifications() {
+                if (!this.isReady) return;
+                
                 this.showNotifications = !this.showNotifications;
                 if (this.showNotifications) {
                     this.loadNotifications();

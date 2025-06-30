@@ -323,7 +323,7 @@
     </main>
 
     <!-- Borrow Modal -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 backdrop-blur-sm" id="borrowModal">
+    <div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 backdrop-blur-sm" id="borrowModal" style="display: none !important;">
         <div class="modal-content bg-white rounded-xl p-8 max-w-md w-full max-h-[80vh] overflow-y-auto animate-[slideUp_0.3s_ease]">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-2xl font-bold text-gray-900">Pinjam Barang</h2>
@@ -335,7 +335,7 @@
     </div>
 
     <!-- Notification Modal -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 backdrop-blur-sm" id="notificationModal">
+    <div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 backdrop-blur-sm" id="notificationModal" style="display: none !important;">
         <div class="modal-content bg-white rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto animate-[slideUp_0.3s_ease]">
             <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-200">
                 <div class="flex items-center gap-3">
@@ -458,8 +458,8 @@
     </footer>
 
     <script>
-        // Inisialisasi variabel
-        // Current filter tracking removed - using server-side filtering
+        // Global state management
+        let isPageReady = false;
         let notifications = [
             {
                 id: 1,
@@ -483,8 +483,12 @@
 
         // Fungsi untuk modal pinjaman
         function openBorrowModal(id, name, description, condition) {
+            if (!isPageReady) return;
+            
             const modal = document.getElementById('borrowModal');
             const modalContent = document.getElementById('borrowModalContent');
+            
+            if (!modal || !modalContent) return;
             
             modalContent.innerHTML = `
                 <div class="mb-6">
@@ -531,13 +535,17 @@
                 </form>
             `;
             
+            modal.setAttribute('data-modal-ready', 'true');
             modal.style.display = 'flex';
             setupDateConstraints();
             loadAvailableSubBarang(id);
         }
 
         function closeBorrowModal() {
-            document.getElementById('borrowModal').style.display = 'none';
+            const modal = document.getElementById('borrowModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
         }
 
         // Fungsi untuk memuat sub barang yang tersedia
@@ -656,8 +664,12 @@
 
         // Fungsi untuk notifikasi
         function openNotificationModal() {
+            if (!isPageReady) return;
+            
             const modal = document.getElementById('notificationModal');
             const notificationsList = document.getElementById('notificationsList');
+            
+            if (!modal || !notificationsList) return;
             
             notificationsList.innerHTML = notifications.map(notification => `
                 <div class="flex gap-4 p-4 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary/10 transition cursor-pointer relative ${notification.read ? 'bg-white' : 'bg-primary/10 border-l-4 border-primary'}" 
@@ -676,12 +688,16 @@
                 </div>
             `).join('');
             
+            modal.setAttribute('data-modal-ready', 'true');
             modal.style.display = 'flex';
             updateNotificationBadge();
         }
 
         function closeNotificationModal() {
-            document.getElementById('notificationModal').style.display = 'none';
+            const modal = document.getElementById('notificationModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
         }
 
         function getNotificationIcon(type) {
@@ -746,6 +762,8 @@
         }
 
         function updateNotificationBadge() {
+            if (!isPageReady) return;
+            
             const unreadCount = notifications.filter(n => !n.read).length;
             const badge = document.getElementById('notificationBadge');
             if (badge) {
@@ -860,8 +878,12 @@
 
         // Inisialisasi saat halaman dimuat
         document.addEventListener('DOMContentLoaded', function() {
-            setupDateConstraints();
-            updateNotificationBadge();
+            // Add delay to ensure page is fully loaded
+            setTimeout(() => {
+                isPageReady = true;
+                setupDateConstraints();
+                updateNotificationBadge();
+            }, 200);
         });
     </script>
 

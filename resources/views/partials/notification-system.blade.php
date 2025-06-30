@@ -2,7 +2,11 @@
 <div class="notification-container fixed top-4 right-4 z-50 space-y-2" 
      x-data="{ 
         notifications: [],
+        isReady: false,
         addNotification(type, message, clickable = false, url = null, actionText = '') {
+            // Only add notifications if component is ready
+            if (!this.isReady) return;
+            
             this.notifications.push({
                 id: Date.now(),
                 type: type,
@@ -25,21 +29,30 @@
         }
      }" 
      x-init="
-        @if(session('success'))
-            addNotification('success', {{ json_encode(session('success')) }}, true, {{ json_encode($clickUrl ?? '/admin/transaksi') }}, {{ json_encode($actionText ?? 'ke halaman transaksi') }});
-        @endif
-        @if(session('error'))
-            addNotification('error', {{ json_encode(session('error')) }}, false, null, '');
-        @endif
-        @if(session('info'))
-            addNotification('info', {{ json_encode(session('info')) }}, true, {{ json_encode($clickUrl ?? '/admin/laporan') }}, {{ json_encode($actionText ?? 'lihat laporan') }});
-        @endif
-        @if(session('warning'))
-            addNotification('warning', {{ json_encode(session('warning')) }}, false, null, '');
-        @endif
+                 // Wait for DOM to be fully ready
+         $nextTick(() => {
+             setTimeout(() => {
+                 this.isReady = true;
+                 this.$el.setAttribute('data-alpine-ready', 'true');
+                 
+                 // Add session-based notifications only after component is ready
+                 @if(session('success'))
+                     this.addNotification('success', {{ json_encode(session('success')) }}, true, {{ json_encode($clickUrl ?? '/admin/transaksi') }}, {{ json_encode($actionText ?? 'ke halaman transaksi') }});
+                 @endif
+                 @if(session('error'))
+                     this.addNotification('error', {{ json_encode(session('error')) }}, false, null, '');
+                 @endif
+                 @if(session('info'))
+                     this.addNotification('info', {{ json_encode(session('info')) }}, true, {{ json_encode($clickUrl ?? '/admin/laporan') }}, {{ json_encode($actionText ?? 'lihat laporan') }});
+                 @endif
+                 @if(session('warning'))
+                     this.addNotification('warning', {{ json_encode(session('warning')) }}, false, null, '');
+                 @endif
+             }, 100);
+         });
      ">
     <template x-for="notification in notifications" :key="notification.id">
-        <div x-show="notification.show"
+        <div x-show="notification.show && isReady"
              x-transition:enter="transform transition ease-out duration-300"
              x-transition:enter-start="translate-x-full opacity-0"
              x-transition:enter-end="translate-x-0 opacity-100"
@@ -48,6 +61,8 @@
              x-transition:leave-end="translate-x-full opacity-0"
              @click="handleNotificationClick(notification)"
              class="max-w-sm w-full glass rounded-lg shadow-lg border transition-all duration-200"
+             style="display: none;"
+             x-bind:style="notification.show && isReady ? '' : 'display: none;'"
              :class="{
                 'border-green-200 bg-green-50 hover:bg-green-100 cursor-pointer': notification.type === 'success',
                 'border-red-200 bg-red-50': notification.type === 'error',
@@ -101,16 +116,25 @@
     (function() {
         'use strict';
         
-        // Global notification function
+        // Global notification function with improved ready state checking
         window.showNotification = function(type, message, clickable = false, url = null, actionText = '') {
             const notificationComponent = document.querySelector('.notification-container');
-            if (notificationComponent && notificationComponent.__x && notificationComponent.__x.$data) {
+            if (notificationComponent && notificationComponent.__x && notificationComponent.__x.$data && notificationComponent.__x.$data.isReady) {
                 notificationComponent.__x.$data.addNotification(type, message, clickable, url, actionText);
             } else {
                 console.warn('🔔 Notification component not ready, queuing notification');
-                // Queue the notification for later if component isn't ready
-                setTimeout(() => {
-                    window.showNotification(type, message, clickable, url, actionText);
+                // Queue the notification for later with a maximum retry limit
+                let retries = 0;
+                const maxRetries = 10;
+                const retryInterval = setInterval(() => {
+                    const component = document.querySelector('.notification-container');
+                    if ((component && component.__x && component.__x.$data && component.__x.$data.isReady) || retries >= maxRetries) {
+                        clearInterval(retryInterval);
+                        if (retries < maxRetries && component && component.__x && component.__x.$data) {
+                            component.__x.$data.addNotification(type, message, clickable, url, actionText);
+                        }
+                    }
+                    retries++;
                 }, 100);
             }
         };

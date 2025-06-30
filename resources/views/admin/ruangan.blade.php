@@ -311,7 +311,7 @@
                             <tbody class="bg-white divide-y divide-gray-200/70" id="table-body">
                                 @forelse ($rooms as $room)
                                 <tr class="room-row table-row-hover transition-colors duration-150">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($rooms->currentPage() - 1) * $rooms->perPage() + $loop->iteration }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 room-code">{{ $room->kode_ruangan }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 room-name">{{ $room->nama_ruangan }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $room->total_sub_barang ?? 0 }} item</td>

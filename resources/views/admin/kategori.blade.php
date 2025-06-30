@@ -299,7 +299,7 @@
                             <tbody class="bg-white divide-y divide-gray-200/70">
                                 <template x-for="(kategori, index) in filteredKategoris" :key="kategori.id">
                                     <tr class="table-row-hover transition-colors duration-150">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="index + 1"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="searchTerm.trim() === '' ? (paginationOffset + index + 1) : (index + 1)"></td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="kategori.kode"></td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="kategori.nama"></td>
                                         <td class="px-6 py-4 text-sm text-gray-500" x-text="kategori.deskripsi"></td>
@@ -406,6 +406,7 @@
                 currentId: null,
                 searchTerm: '',
                 filteredKategoris: @json($kategoris->items()),
+                paginationOffset: {{ ($kategoris->currentPage() - 1) * $kategoris->perPage() }},
                 form: {
                     kode: '',
                     nama: '',

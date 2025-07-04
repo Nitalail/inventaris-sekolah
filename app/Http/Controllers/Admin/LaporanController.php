@@ -101,7 +101,12 @@ class LaporanController extends Controller
                 // Generate safe filename without special characters
                 $safeFileName = Str::slug($judul) . '_' . now()->format('d-m-Y') . '.pdf';
                 
-                return $pdf->download($safeFileName);
+                return response($pdf->output(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $safeFileName . '"',
+                    'Cache-Control' => 'no-cache, must-revalidate',
+                    'Pragma' => 'no-cache'
+                ]);
             } catch (\Exception $e) {
                 return redirect()->back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
             }

@@ -64,14 +64,15 @@ class DashboardController extends Controller
 
     protected function calculateBasicStats()
     {
-        // Hitung total sub barang
-        $totalSubBarang = SubBarang::count();
+        // Hitung total sub barang (hanya yang aktif, tidak termasuk nonaktif)
+        $totalSubBarang = SubBarang::where('kondisi', '!=', 'nonaktif')->count();
         
-        // Hitung sub barang yang sedang dipinjam
+        // Hitung sub barang yang sedang dipinjam (hanya yang aktif)
         $borrowedSubBarang = DB::select("
             SELECT COUNT(DISTINCT sub_barang.id) as count
             FROM sub_barang 
-            WHERE EXISTS (
+            WHERE sub_barang.kondisi != 'nonaktif'
+            AND EXISTS (
                 SELECT 1 FROM peminjaman 
                 WHERE JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))
                 AND peminjaman.status IN ('pending', 'dipinjam', 'dikonfirmasi')
@@ -82,8 +83,10 @@ class DashboardController extends Controller
         $totalRuangan = Ruangan::count();
         $lastMonth = Carbon::now()->subMonth();
         
-        // Hitung perubahan sub barang
-        $totalSubBarangLastMonth = SubBarang::where('created_at', '<=', $lastMonth)->count();
+        // Hitung perubahan sub barang (hanya yang aktif)
+        $totalSubBarangLastMonth = SubBarang::where('kondisi', '!=', 'nonaktif')
+            ->where('created_at', '<=', $lastMonth)
+            ->count();
         
         return [
             'total_items' => $totalSubBarang,
@@ -108,11 +111,12 @@ class DashboardController extends Controller
 
     protected function calculateBorrowedChange($currentBorrowed, $lastMonth)
     {
-        // Hitung jumlah sub barang yang dipinjam bulan lalu
+        // Hitung jumlah sub barang yang dipinjam bulan lalu (hanya yang aktif)
         $borrowedLastMonth = DB::select("
             SELECT COUNT(DISTINCT sub_barang.id) as count
             FROM sub_barang 
-            WHERE EXISTS (
+            WHERE sub_barang.kondisi != 'nonaktif'
+            AND EXISTS (
                 SELECT 1 FROM peminjaman 
                 WHERE JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))
                 AND peminjaman.status IN ('pending', 'dipinjam', 'dikonfirmasi')
@@ -180,7 +184,7 @@ class DashboardController extends Controller
             ->withCount(['subBarang as available_stock' => function ($query) {
                 $query->whereIn('kondisi', ['baik', 'rusak_ringan'])
                       ->whereNotExists(function ($subQuery) {
-                          $subQuery->select(\DB::raw(1))
+                          $subQuery->select(DB::raw(1))
                                    ->from('peminjaman')
                                    ->whereRaw('JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))')
                                    ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'dikonfirmasi']);

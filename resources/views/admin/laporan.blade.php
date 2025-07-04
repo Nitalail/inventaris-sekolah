@@ -588,11 +588,12 @@
         document.getElementById('date_from').value = thirtyDaysAgo.toISOString().split('T')[0];
         document.getElementById('date_from').max = today;
         
-        // Form submission with notification
+        // Form submission with auto-download handling
         document.getElementById('form-generate-laporan').addEventListener('submit', function(e) {
             const reportType = document.getElementById('report_type').value;
             const dateFrom = document.getElementById('date_from').value;
             const dateTo = document.getElementById('date_to').value;
+            const format = document.getElementById('format').value;
             
             if (!reportType) {
                 e.preventDefault();
@@ -617,33 +618,98 @@
             hideModal('modal-generate');
             
             // Show notification about download starting
-            if (window.showNotification) {
-                window.showNotification(
-                    'info', 
-                    'Laporan sedang digenerate. Download akan dimulai secara otomatis...', 
-                    false
-                );
+            showNotification('info', 'Laporan sedang digenerate. Download akan dimulai secara otomatis...', false);
+            
+            // Create a hidden iframe for download to avoid page navigation
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            
+            // Try modern download method first, fallback to traditional form submission
+            if (window.URL && window.URL.createObjectURL) {
+                const formData = new FormData(this);
+                const xhr = new XMLHttpRequest();
+                
+                xhr.open('POST', this.action, true);
+                xhr.responseType = 'blob';
+                
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        // Create download link
+                        const blob = new Blob([xhr.response]);
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        
+                        // Generate filename based on report type and format
+                        const reportTypeNames = {
+                            'inventory': 'Laporan_Inventaris',
+                            'transaction': 'Laporan_Transaksi',
+                            'room': 'Laporan_Ruangan'
+                        };
+                        const fileName = `${reportTypeNames[reportType] || 'Laporan'}_${new Date().toISOString().split('T')[0]}.${format}`;
+                        a.download = fileName;
+                        
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        // Show success notification
+                        showNotification('success', 'Laporan berhasil dibuat dan didownload!', true);
+                        
+                        // Reset button
+                        submitButton.innerHTML = originalText;
+                        submitButton.disabled = false;
+                        
+                        // Refresh page to show new report in list
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        // Handle error
+                        showNotification('error', 'Gagal generate laporan. Silakan coba lagi.', true);
+                        submitButton.innerHTML = originalText;
+                        submitButton.disabled = false;
+                    }
+                    
+                    // Clean up iframe
+                    document.body.removeChild(iframe);
+                };
+                
+                xhr.onerror = function() {
+                    showNotification('error', 'Gagal generate laporan. Silakan coba lagi.', true);
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                    document.body.removeChild(iframe);
+                };
+                
+                xhr.send(formData);
+            } else {
+                // Fallback for older browsers - submit form normally
+                showNotification('info', 'Laporan sedang digenerate. Download akan dimulai...', false);
+                
+                // Reset button after delay
+                setTimeout(() => {
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                    
+                    // Show success notification
+                    showNotification('success', 'Laporan berhasil dibuat!', true);
+                    
+                    // Refresh page to show new report in list
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }, 3000);
+                
+                // Submit form normally (will trigger download)
+                return true;
             }
             
-            // Reset button after short delay to allow download to start
-            setTimeout(() => {
-                submitButton.innerHTML = originalText;
-                submitButton.disabled = false;
-                
-                // Show success notification after download should have started
-                if (window.showNotification) {
-                    window.showNotification(
-                        'success', 
-                        'Laporan berhasil dibuat dan didownload!', 
-                        true
-                    );
-                }
-                
-                // Refresh page to show new report in list after download
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            }, 2000);
+            // Prevent default form submission
+            e.preventDefault();
         });
     });
 </script>

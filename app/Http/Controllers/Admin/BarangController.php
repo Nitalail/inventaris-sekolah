@@ -17,7 +17,9 @@ class BarangController extends Controller
         $perPage = $request->input('perPage', 10);
 
         $barangs = Barang::with(['kategori', 'ruangan'])
-            ->withCount('subBarang as sub_barang_count')
+            ->withCount(['subBarang as sub_barang_count' => function ($query) {
+                $query->where('kondisi', '!=', 'nonaktif');
+            }])
             ->when($filters['kategori_id'] ?? null, fn($q, $kategori_id) => $q->where('kategori_id', $kategori_id))
             ->when($filters['ruangan_id'] ?? null, fn($q, $ruangan_id) => $q->where('ruangan_id', $ruangan_id))
             // Tampilkan semua barang (tidak ada lagi filter status)

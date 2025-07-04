@@ -640,22 +640,12 @@
                                                         title="Transaksi sudah dikembalikan dan tidak dapat diubah">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <button disabled
-                                                        class="text-gray-400 p-2 rounded-lg cursor-not-allowed opacity-50"
-                                                        title="Transaksi sudah dikembalikan dan tidak dapat dihapus">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
                                                 @else
-                                                    <!-- Active Transaction - Can Edit/Delete -->
+                                                    <!-- Active Transaction - Can Edit -->
                                                     <button @click="openEditModal({{ $transaksi->id }})"
                                                         class="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-slow"
                                                         title="Edit Transaksi">
                                                         <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button @click="confirmDelete({{ $transaksi->id }})"
-                                                        class="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-slow"
-                                                        title="Hapus Transaksi">
-                                                        <i class="fas fa-trash"></i>
                                                     </button>
                                                 @endif
                                             </div>
@@ -1084,73 +1074,7 @@
                     }
                 },
 
-                confirmDelete(id) {
-                    // Check if transaction is returned (read-only)
-                    const row = document.querySelector(`tr[data-id="${id}"]`);
-                    if (row) {
-                        const cells = row.querySelectorAll('td');
-                        const status = cells[6].querySelector('span').textContent.trim();
-                        
-                        // 🔒 PROTEKSI: Cek jika transaksi sudah dikembalikan
-                        if (status === 'dikembalikan') {
-                            if (window.showNotification) {
-                                window.showNotification('warning', 'Transaksi yang sudah dikembalikan tidak dapat dihapus. Data sudah final untuk keperluan audit.', false);
-                            } else {
-                                alert('Transaksi yang sudah dikembalikan tidak dapat dihapus. Data sudah final untuk keperluan audit.');
-                            }
-                            return;
-                        }
-                    }
 
-                    if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-                        if (!csrfToken) {
-                            console.error('CSRF token not found');
-                            alert('Terjadi kesalahan: CSRF token tidak ditemukan');
-                            return;
-                        }
-
-                        // Send DELETE request to server
-                        fetch(`/admin/transaksi/${id}`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
-                                    'Accept': 'application/json',
-                                    'Content-Type': 'application/json'
-                                }
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    // Remove the row from the table
-                                    const rowToRemove = document.querySelector(`tr[data-id="${id}"]`);
-                                    if (rowToRemove) {
-                                        rowToRemove.remove();
-                                    }
-                                    // Show success message
-                                    if (window.showNotification) {
-                                        window.showNotification('success', data.message, false);
-                                    } else {
-                                        alert(data.message);
-                                    }
-                                } else {
-                                    if (window.showNotification) {
-                                        window.showNotification('error', data.message || 'Gagal menghapus transaksi', false);
-                                    } else {
-                                        alert(data.message || 'Gagal menghapus transaksi');
-                                    }
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                if (window.showNotification) {
-                                    window.showNotification('error', 'Terjadi kesalahan saat menghapus transaksi', false);
-                                } else {
-                                    alert('Terjadi kesalahan saat menghapus transaksi');
-                                }
-                            });
-                    }
-                },
 
 
 

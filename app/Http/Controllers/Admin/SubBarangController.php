@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SubBarang;
 use App\Models\Barang;
+use Illuminate\Support\Facades\DB;
 
 class SubBarangController extends Controller
 {
@@ -26,7 +27,7 @@ class SubBarangController extends Controller
         $validated = $request->validate([
             'barang_id' => 'required|exists:barang,id',
             'kode' => 'required|unique:sub_barang,kode|max:50',
-            'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
+            'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat,nonaktif',
             'tahun_perolehan' => 'required|integer|min:1900|max:' . date('Y'),
         ]);
 
@@ -59,23 +60,49 @@ class SubBarangController extends Controller
     {
         $subBarang = SubBarang::findOrFail($id);
         
-        $validated = $request->validate([
-            'barang_id' => 'required|exists:barang,id',
-            'kode' => 'required|max:50|unique:sub_barang,kode,' . $id,
-            'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
-            'tahun_perolehan' => 'required|integer|min:1900|max:' . date('Y'),
-        ]);
-
-        $subBarang->update($validated);
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Sub barang berhasil diperbarui!'
+        try {
+            $validated = $request->validate([
+                'barang_id' => 'required|exists:barang,id',
+                'kode' => 'required|max:50|unique:sub_barang,kode,' . $id,
+                'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat,nonaktif',
+                'tahun_perolehan' => 'required|integer|min:1900|max:' . date('Y'),
             ]);
-        }
 
-        return redirect()->back()->with('success', 'Sub barang berhasil diperbarui!');
+            // Convert tahun_perolehan to integer if it's a string
+            if (isset($validated['tahun_perolehan']) && is_string($validated['tahun_perolehan'])) {
+                $validated['tahun_perolehan'] = (int) $validated['tahun_perolehan'];
+            }
+
+            $subBarang->update($validated);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Sub barang berhasil diperbarui!'
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Sub barang berhasil diperbarui!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
+            throw $e;
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                ], 500);
+            }
+
+            throw $e;
+        }
     }
 
     public function destroy(Request $request, $id)
@@ -125,7 +152,7 @@ class SubBarangController extends Controller
         $subBarangs = SubBarang::where('barang_id', $barangId)
             ->whereIn('kondisi', ['baik', 'rusak_ringan'])
             ->whereNotExists(function ($subQuery) {
-                $subQuery->select(\DB::raw(1))
+                $subQuery->select(DB::raw(1))
                          ->from('peminjaman')
                          ->whereRaw('JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))')
                          ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'dikonfirmasi']);
@@ -133,5 +160,33 @@ class SubBarangController extends Controller
             ->get(['id', 'kode', 'kondisi', 'tahun_perolehan']);
         
         return response()->json($subBarangs);
+    }
+
+    public function testUpdate(Request $request, $id)
+    {
+        try {
+            $subBarang = SubBarang::findOrFail($id);
+            
+            // Test update dengan data sederhana
+            $testData = [
+                'barang_id' => $subBarang->barang_id,
+                'kode' => $subBarang->kode,
+                'kondisi' => 'nonaktif',
+                'tahun_perolehan' => $subBarang->tahun_perolehan
+            ];
+
+            $subBarang->update($testData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Test update berhasil',
+                'sub_barang' => $subBarang->fresh()->toArray()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Test update gagal: ' . $e->getMessage()
+            ], 500);
+        }
     }
 } 

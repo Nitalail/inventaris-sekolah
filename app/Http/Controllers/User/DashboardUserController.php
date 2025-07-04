@@ -20,6 +20,11 @@ class DashboardUserController extends Controller
     {
         $user = Auth::user();
 
+        // Check if user is authenticated
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk mengakses dashboard.');
+        }
+
         // Hitung statistik peminjaman
         $stats = [
             'activeLoans' => Peminjaman::where('user_id', $user->id)
@@ -69,6 +74,10 @@ class DashboardUserController extends Controller
 
     protected function calculateCompletedOnTimeLoans($userId)
     {
+        if (!$userId) {
+            return 0;
+        }
+
         return DB::table('peminjaman')
             ->where('user_id', $userId)
             ->where('status', 'dikembalikan') // Menggunakan status 'dikembalikan' sesuai RiwayatController
@@ -87,6 +96,10 @@ class DashboardUserController extends Controller
 
     protected function calculateOverdueLoans($userId)
     {
+        if (!$userId) {
+            return 0;
+        }
+
         $query = Peminjaman::where('user_id', $userId)->where('status', 'dipinjam');
 
         // Cek kolom yang tersedia di database
@@ -101,6 +114,11 @@ class DashboardUserController extends Controller
 
     public function pinjamBarang(Request $request, $barangId)
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk meminjam barang.');
+        }
+
         try {
             $request->validate([
                 'quantity' => 'required|integer|min:1',
@@ -116,7 +134,7 @@ class DashboardUserController extends Controller
             }
 
             // Cek apakah user sudah meminjam barang yang sama dan belum dikembalikan
-            $existingLoan = Peminjaman::where('user_id', auth()->id())
+            $existingLoan = Peminjaman::where('user_id', Auth::id())
                 ->where('barang_id', $barangId)
                 ->whereIn('status', ['dipinjam', 'pending'])
                 ->exists();
@@ -127,7 +145,7 @@ class DashboardUserController extends Controller
 
             // Buat peminjaman
             $peminjaman = Peminjaman::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'barang_id' => $barangId,
                 'quantity' => $request->quantity,
                 'tanggal_pinjam' => now(),

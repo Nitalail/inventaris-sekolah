@@ -552,11 +552,21 @@
         function loadAvailableSubBarang(barangId) {
             const container = document.getElementById('borrowItemsContainer');
             
-            fetch(`/admin/sub-barang/available/${barangId}`)
-                .then(response => response.json())
+            // Show loading state
+            container.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-blue-500"></i><p class="text-gray-500 mt-2">Memuat item...</p></div>';
+            
+            fetch(`/user/sub-barang/available/${barangId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Sub barang data:', data);
+                    
                     if (data.length === 0) {
-                        container.innerHTML = '<p class="text-gray-500 text-center py-8">Tidak ada item tersedia</p>';
+                        container.innerHTML = '<p class="text-gray-500 text-center py-8">Tidak ada item tersedia untuk dipinjam</p>';
                         return;
                     }
                     
@@ -584,7 +594,16 @@
                 })
                 .catch(error => {
                     console.error('Error loading sub barang:', error);
-                    container.innerHTML = '<p class="text-red-500 text-center py-8">Gagal memuat item</p>';
+                    container.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-2xl mb-2"></i>
+                            <p class="text-red-500 font-medium">Gagal memuat item</p>
+                            <p class="text-gray-500 text-sm mt-1">Silakan coba lagi atau hubungi admin</p>
+                            <button onclick="loadAvailableSubBarang(${barangId})" class="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                                <i class="fas fa-redo mr-1"></i>Coba Lagi
+                            </button>
+                        </div>
+                    `;
                 });
         }
 

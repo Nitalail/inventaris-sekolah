@@ -136,6 +136,10 @@
         .badge-danger {
             @apply bg-red-100 text-red-800;
         }
+
+        .badge-gray {
+            @apply bg-gray-100 text-gray-700;
+        }
     </style>
 </head>
 
@@ -323,7 +327,7 @@
                 </div>
                 <div class="p-6">
                     <form method="GET" action="{{ route('admin.barang.index') }}">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                                 <select name="kategori_id"
@@ -350,6 +354,7 @@
                                     @endforeach
                                 </select>
                             </div>
+
                             <div class="flex items-end space-x-2">
                                 <button type="submit"
                                     class="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white px-4 py-2 rounded-lg transition-slow shadow-sm hover:shadow-md">
@@ -412,7 +417,8 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                 {{ $barang->kode }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $barang->nama }}</td>
+                                                {{ $barang->nama }}
+                                            </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $barang->kategori->nama ?? '-' }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -439,17 +445,6 @@
                                                         title="Edit">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <form action="{{ route('admin.barang.destroy', $barang->id) }}"
-                                                        method="POST" class="inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit"
-                                                            class="text-rose-600 hover:text-rose-900 p-2 rounded-lg hover:bg-rose-50 transition-slow"
-                                                            onclick="return confirm('Apakah Anda yakin ingin menghapus barang ini?')"
-                                                            title="Hapus">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </form>
                                                 </div>
                                             </td>
                                         </tr>
@@ -940,15 +935,13 @@
                     <!-- Sub Barang Section -->
                     <div class="mt-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-lg font-semibold text-gray-800">Daftar Sub Barang</h4>
+                            <div class="flex items-center space-x-3">
+                                <h4 class="text-lg font-semibold text-gray-800">Daftar Sub Barang</h4>
+                                <div class="text-xs text-gray-500" x-show="subBarangData[viewItem.id]">
+                                    Terakhir update: <span x-text="new Date().toLocaleTimeString('id-ID')"></span>
+                                </div>
+                            </div>
                             <div class="flex space-x-2">
-                                <button
-                                    class="bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-700 px-3 py-2 rounded-lg flex items-center space-x-2 transition-slow text-sm"
-                                    @click="refreshSubBarangData(viewItem.id)"
-                                    title="Refresh data">
-                                    <i class="fas fa-sync-alt"></i>
-                                    <span>Refresh</span>
-                                </button>
                                 <button
                                     class="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-slow shadow-sm hover:shadow-md text-sm"
                                     @click="openAddSubModal()">
@@ -995,24 +988,26 @@
                                         :class="{
                                             'badge-success': sub.kondisi === 'baik',
                                             'badge-warning': sub.kondisi === 'rusak_ringan',
-                                            'badge-danger': sub.kondisi === 'rusak_berat'
+                                            'badge-danger': sub.kondisi === 'rusak_berat',
+                                            'badge-gray': sub.kondisi === 'nonaktif'
                                         }"
                                         x-text="sub.kondisi === 'baik' ? 'Baik' : 
                                                 sub.kondisi === 'rusak_ringan' ? 'Rusak Ringan' : 
-                                                'Rusak Berat'">
+                                                sub.kondisi === 'rusak_berat' ? 'Rusak Berat' :
+                                                sub.kondisi === 'nonaktif' ? 'Nonaktif' : 'Tidak Diketahui'">
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <template x-if="sub.status_peminjaman === 'dipinjam'">
+                                    <template x-if="sub.status_peminjaman === 'dipinjam' || sub.kondisi === 'nonaktif'">
                                         <div>
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                                 <i class="fas fa-user-clock mr-1"></i>
                                                 Tidak Tersedia
                                             </span>
-                                            <div class="text-xs text-gray-500 mt-1" x-text="sub.peminjam_info || 'Sedang dipinjam'"></div>
+                                            <div class="text-xs text-gray-500 mt-1" x-text="sub.kondisi === 'nonaktif' ? 'Kondisi nonaktif' : (sub.peminjam_info || 'Sedang dipinjam')"></div>
                                         </div>
                                     </template>
-                                    <template x-if="sub.status_peminjaman === 'tersedia' || !sub.status_peminjaman">
+                                    <template x-if="(sub.status_peminjaman === 'tersedia' || !sub.status_peminjaman) && sub.kondisi !== 'nonaktif'">
                                         <div>
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                 <i class="fas fa-check-circle mr-1"></i>
@@ -1030,11 +1025,7 @@
                                             @click="openEditSubModal(sub)" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button
-                                            class="text-rose-600 hover:text-rose-900 p-2 rounded-lg hover:bg-rose-50 transition-slow"
-                                            @click="openDeleteSubModal(sub)" title="Hapus">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+
                                     </div>
                                 </td>
                             </tr>
@@ -1069,52 +1060,7 @@
             </div>
         </div>
 
-        <!-- Modal Hapus Barang -->
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-show="showDeleteModal" x-cloak>
-            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity transition-slow"
-                @click="showDeleteModal = false"></div>
 
-            <div class="relative glass rounded-xl shadow-2xl border border-gray-200/70 w-full max-w-md transform transition-all"
-                x-transition:enter="ease-out duration-300"
-                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                x-transition:leave="ease-in duration-200"
-                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-                <div class="px-6 py-4 border-b border-gray-200/70 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-800">Konfirmasi Hapus</h3>
-                    <button type="button"
-                        class="text-gray-400 hover:text-gray-500 focus:outline-none transition-slow"
-                        @click="showDeleteModal = false">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-
-                <div class="p-6">
-                    <p class="text-gray-700">Apakah Anda yakin ingin menghapus barang ini?</p>
-                    <div class="mt-4 bg-gray-50 p-4 rounded-lg">
-                        <p class="font-medium text-gray-900" x-text="`${deleteItem.kode} - ${deleteItem.nama}`"></p>
-                    </div>
-                    <p class="mt-4 text-sm text-red-600 font-medium">Tindakan ini tidak dapat dibatalkan!</p>
-                </div>
-
-                <div class="px-6 py-4 border-t border-gray-200/70 flex justify-end space-x-3">
-                    <button type="button"
-                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-slow"
-                        @click="showDeleteModal = false">
-                        Batal
-                    </button>
-                    <form :action="'/admin/barang/' + deleteItem.id" method="POST">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit"
-                            class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-lg hover:from-red-600 hover:to-rose-600 focus:outline-none focus:ring-2 focus:ring-red-500 transition-slow shadow-sm hover:shadow-md">
-                            <i class="fas fa-trash mr-2"></i> Hapus
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
 
         <!-- Modal Edit Sub Barang -->
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-show="showEditSubModal" x-cloak>
@@ -1159,6 +1105,7 @@
                                 <option value="baik">Baik</option>
                                 <option value="rusak_ringan">Rusak Ringan</option>
                                 <option value="rusak_berat">Rusak Berat</option>
+                                <option value="nonaktif">Nonaktif</option>
                             </select>
                         </div>
                         <div>
@@ -1184,50 +1131,7 @@
             </div>
         </div>
 
-        <!-- Modal Delete Sub Barang -->
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-show="showDeleteSubModal" x-cloak>
-            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity transition-slow"
-                @click="showDeleteSubModal = false"></div>
 
-            <div class="relative glass rounded-xl shadow-2xl border border-gray-200/70 w-full max-w-md transform transition-all"
-                x-transition:enter="ease-out duration-300"
-                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                x-transition:leave="ease-in duration-200"
-                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-                <div class="px-6 py-4 border-b border-gray-200/70 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-800">Konfirmasi Hapus Sub Barang</h3>
-                    <button type="button"
-                        class="text-gray-400 hover:text-gray-500 focus:outline-none transition-slow"
-                        @click="showDeleteSubModal = false">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-
-                <div class="p-6">
-                    <p class="text-gray-700">Apakah Anda yakin ingin menghapus sub barang ini?</p>
-                    <div class="mt-4 bg-gray-50 p-4 rounded-lg">
-                        <p class="font-medium text-gray-900" x-text="deleteSubItem.kode"></p>
-                        <p class="text-sm text-gray-600" x-text="deleteSubItem.barang_nama"></p>
-                    </div>
-                    <p class="mt-4 text-sm text-red-600 font-medium">Tindakan ini tidak dapat dibatalkan!</p>
-                </div>
-
-                <div class="px-6 py-4 border-t border-gray-200/70 flex justify-end space-x-3">
-                    <button type="button"
-                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-slow"
-                        @click="showDeleteSubModal = false">
-                        Batal
-                    </button>
-                    <button type="button"
-                        class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-lg hover:from-red-600 hover:to-rose-600 focus:outline-none focus:ring-2 focus:ring-red-500 transition-slow shadow-sm hover:shadow-md"
-                        @click="deleteSubBarang">
-                        <i class="fas fa-trash mr-2"></i> Hapus
-                    </button>
-                </div>
-            </div>
-        </div>
     </main>
 
     <script>
@@ -1238,8 +1142,7 @@
                 showEditModal: false,
                 showEditSubModal: false,
                 showViewModal: false,
-                showDeleteModal: false,
-                showDeleteSubModal: false,
+
                 subBarangCache: {},
                 subBarangData: {},
                 editItem: {
@@ -1261,16 +1164,8 @@
                     tahun_perolehan: ''
                 },
                 viewItem: {},
-                deleteItem: {
-                    id: '',
-                    kode: '',
-                    nama: ''
-                },
-                deleteSubItem: {
-                    id: '',
-                    kode: '',
-                    barang_nama: ''
-                },
+
+
 
                 openEditModal(item) {
                     this.editItem = {
@@ -1345,15 +1240,6 @@
                     this.showEditSubModal = true;
                 },
 
-                openDeleteSubModal(sub) {
-                    this.deleteSubItem = {
-                        id: sub.id,
-                        kode: sub.kode,
-                        barang_nama: this.viewItem.nama
-                    };
-                    this.showDeleteSubModal = true;
-                },
-
                 updateSubBarang() {
                     const formData = new FormData();
                     formData.append('_method', 'PUT');
@@ -1363,54 +1249,62 @@
                     formData.append('kondisi', this.editSubItem.kondisi);
                     formData.append('tahun_perolehan', this.editSubItem.tahun_perolehan);
 
-                    fetch(`/admin/sub-barang/${this.editSubItem.id}`, {
+                    console.log('Updating sub barang:', this.editSubItem);
+                    // Convert FormData to object for logging
+                    const formDataObj = {};
+                    for (let [key, value] of formData.entries()) {
+                        formDataObj[key] = value;
+                    }
+                    console.log('Form data:', formDataObj);
+
+                    console.log('Sending request to:', `/admin/sub-barang/test-update/${this.editSubItem.id}`);
+                    
+                    // Get fresh CSRF token
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                    console.log('CSRF Token:', csrfToken);
+                    
+                    fetch(`/admin/sub-barang/test-update/${this.editSubItem.id}`, {
                         method: 'POST',
-                        body: formData,
                         headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
                         }
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        console.log('Response headers:', response.headers);
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('Response data:', data);
                         if (data.success) {
                             this.showEditSubModal = false;
-                            // Refresh sub barang data instead of reloading page
-                            this.refreshSubBarangData(this.editSubItem.barang_id);
+                            
+                            // Show success message with updated status
+                            const newStatus = this.editSubItem.kondisi;
+                            const statusText = newStatus === 'baik' ? 'Baik' : 
+                                             newStatus === 'rusak_ringan' ? 'Rusak Ringan' : 
+                                             newStatus === 'rusak_berat' ? 'Rusak Berat' :
+                                             newStatus === 'nonaktif' ? 'Nonaktif' : 'Tidak Diketahui';
+                            
+                            alert(`Sub barang berhasil diperbarui!\nStatus: ${statusText}`);
+                            
+                            // Reload sub barang data to show updated status
+                            this.loadSubBarangData(this.editSubItem.barang_id);
                         } else {
                             alert('Terjadi kesalahan: ' + (data.message || 'Gagal memperbarui sub barang'));
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        this.refreshSubBarangData(this.editSubItem.barang_id);
-                    });
-                },
-
-                deleteSubBarang() {
-                    const formData = new FormData();
-                    formData.append('_method', 'DELETE');
-                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-
-                    fetch(`/admin/sub-barang/${this.deleteSubItem.id}`, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            this.showDeleteSubModal = false;
-                            // Refresh sub barang data instead of reloading page
-                            this.refreshSubBarangData(this.viewItem.id);
-                        } else {
-                            alert('Terjadi kesalahan: ' + (data.message || 'Gagal menghapus sub barang'));
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        this.refreshSubBarangData(this.viewItem.id);
+                        alert('Terjadi kesalahan: ' + error.message);
+                        this.loadSubBarangData(this.editSubItem.barang_id);
                     });
                 },
 
@@ -1460,8 +1354,8 @@
                     return nextIncrement;
                 },
 
-                // Method to refresh sub barang data
-                async refreshSubBarangData(barangId) {
+                // Method to load sub barang data
+                async loadSubBarangData(barangId) {
                     // Clear cache for this barang
                     const cacheKey = `subBarangs_${barangId}`;
                     delete this.subBarangCache[cacheKey];
@@ -1470,19 +1364,17 @@
                     try {
                         const subBarangs = await this.getSubBarangs(barangId);
                         this.subBarangData[barangId] = subBarangs;
+                        
+                        // Log the updated data for debugging
+                        console.log('Sub barang data reloaded:', subBarangs);
                     } catch (error) {
-                        console.error('Error refreshing sub barangs:', error);
+                        console.error('Error reloading sub barangs:', error);
                     }
                 },
 
-                openDeleteModal(item) {
-                    this.deleteItem = {
-                        id: item.id,
-                        kode: item.kode,
-                        nama: item.nama
-                    };
-                    this.showDeleteModal = true;
-                }
+
+
+
             }
         }
 

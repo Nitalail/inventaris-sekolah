@@ -607,36 +607,43 @@
                 return;
             }
 
-            // Show generating notification
+            // Show generating notification immediately
             const submitButton = this.querySelector('button[type="submit"]');
             const originalText = submitButton.innerHTML;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
             submitButton.disabled = true;
             
-            // Add notification to show that report is being generated
-            setTimeout(() => {
-                if (window.showNotification) {
-                    window.showNotification(
-                        'success', 
-                        'Laporan berhasil dibuat! File sedang didownload...', 
-                        true, 
-                        '/admin/transaksi',
-                        'ke halaman transaksi'
-                    );
-                }
-            }, 1000); // Show after 1 second
-
-            // Reset button after delay
+            // Hide modal immediately to not block download
+            hideModal('modal-generate');
+            
+            // Show notification about download starting
+            if (window.showNotification) {
+                window.showNotification(
+                    'info', 
+                    'Laporan sedang digenerate. Download akan dimulai secara otomatis...', 
+                    false
+                );
+            }
+            
+            // Reset button after short delay to allow download to start
             setTimeout(() => {
                 submitButton.innerHTML = originalText;
                 submitButton.disabled = false;
-                hideModal('modal-generate');
                 
-                // Refresh the page after short delay to show new report in list
+                // Show success notification after download should have started
+                if (window.showNotification) {
+                    window.showNotification(
+                        'success', 
+                        'Laporan berhasil dibuat dan didownload!', 
+                        true
+                    );
+                }
+                
+                // Refresh page to show new report in list after download
                 setTimeout(() => {
                     window.location.reload();
-                }, 2000);
-            }, 3000);
+                }, 1500);
+            }, 2000);
         });
     });
 </script>

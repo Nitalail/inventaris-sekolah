@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Barang extends Model
 {
@@ -47,5 +48,25 @@ class Barang extends Model
         return $this->hasMany(SubBarang::class, 'barang_id');
     }
 
+    // Scope untuk barang yang memiliki sub barang yang dapat dipinjam
+    public function scopeAvailableForLoan($query)
+    {
+        return $query->whereHas('subBarang', function ($q) {
+            $q->whereIn('kondisi', ['baik', 'rusak_ringan']);
+        });
+    }
 
+    // Method untuk mendapatkan jumlah sub barang yang dapat dipinjam
+    public function getAvailableSubBarangCountAttribute()
+    {
+        return $this->subBarang()
+            ->whereIn('kondisi', ['baik', 'rusak_ringan'])
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                      ->from('peminjaman')
+                      ->whereRaw('JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))')
+                      ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'dikonfirmasi']);
+            })
+            ->count();
+    }
 }

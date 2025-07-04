@@ -14,6 +14,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class LaporanController extends Controller
@@ -96,9 +98,10 @@ class LaporanController extends Controller
                     throw new \Exception('Failed to save PDF to storage');
                 }
 
-                return $pdf->download("{$judul} - {$tanggal}.pdf")
-                    ->header('Content-Type', 'application/pdf')
-                    ->header('Content-Disposition', 'attachment; filename="' . "{$judul} - {$tanggal}.pdf" . '"');
+                // Generate safe filename without special characters
+                $safeFileName = Str::slug($judul) . '_' . now()->format('d-m-Y') . '.pdf';
+                
+                return $pdf->download($safeFileName);
             } catch (\Exception $e) {
                 return redirect()->back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
             }
@@ -115,9 +118,10 @@ class LaporanController extends Controller
                     throw new \Exception('Failed to save Excel to storage');
                 }
 
-                return Excel::download($export, "{$judul} - {$tanggal}.xlsx")
-                    ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                    ->header('Content-Disposition', 'attachment; filename="' . "{$judul} - {$tanggal}.xlsx" . '"');
+                // Generate safe filename without special characters
+                $safeFileName = Str::slug($judul) . '_' . now()->format('d-m-Y') . '.xlsx';
+                
+                return Excel::download($export, $safeFileName);
             } catch (\Exception $e) {
                 return redirect()->back()->with('error', 'Gagal generate Excel: ' . $e->getMessage());
             }
@@ -148,14 +152,14 @@ class LaporanController extends Controller
                 'report_date' => now(),
                 'file_format' => $request->format,
                 'file_path' => $filePath,
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
             ]);
             
             // Clean up old reports (keep only last 50 reports)
             $this->cleanupOldReports();
             
         } catch (\Exception $e) {
-            \Log::error('Failed to save report record: ' . $e->getMessage());
+            Log::error('Failed to save report record: ' . $e->getMessage());
         }
     }
 
@@ -178,7 +182,7 @@ class LaporanController extends Controller
                 $report->delete();
             }
         } catch (\Exception $e) {
-            \Log::error('Failed to cleanup old reports: ' . $e->getMessage());
+            Log::error('Failed to cleanup old reports: ' . $e->getMessage());
         }
     }
 

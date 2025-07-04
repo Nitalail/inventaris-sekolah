@@ -5,12 +5,18 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class RiwayatController extends Controller
 {
     public function index()
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk melihat riwayat.');
+        }
+
         // Ambil data riwayat peminjaman user (hanya status dikembalikan)
         $riwayat = DB::table('peminjaman')
             ->join('barang', 'peminjaman.barang_id', '=', 'barang.id')
@@ -31,7 +37,7 @@ class RiwayatController extends Controller
                 'kategoris.nama as kategori',
                 'users.name as nama_peminjam'
             )
-            ->where('peminjaman.user_id', auth()->id())
+            ->where('peminjaman.user_id', Auth::id())
             ->where('peminjaman.status', 'dikembalikan') // HANYA TAMPILKAN STATUS DIKEMBALIKAN
             ->orderBy('peminjaman.updated_at', 'desc') // Urutkan berdasarkan tanggal pengembalian terbaru
             ->get();
@@ -96,6 +102,11 @@ class RiwayatController extends Controller
     // METHOD UNTUK EXPORT PDF (OPSIONAL)
     public function exportPdf()
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk mengekspor data.');
+        }
+
         // Ambil data riwayat yang sama
         $riwayat = DB::table('peminjaman')
             ->join('barang', 'peminjaman.barang_id', '=', 'barang.id')
@@ -114,7 +125,7 @@ class RiwayatController extends Controller
                 'kategoris.nama as kategori',
                 'users.name as nama_peminjam'
             )
-            ->where('peminjaman.user_id', auth()->id())
+            ->where('peminjaman.user_id', Auth::id())
             ->where('peminjaman.status', 'dikembalikan')
             ->orderBy('peminjaman.updated_at', 'desc')
             ->get();
@@ -131,6 +142,11 @@ class RiwayatController extends Controller
     // METHOD UNTUK FILTER BERDASARKAN KATEGORI
     public function filterByCategory(Request $request)
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Silakan login terlebih dahulu.'], 401);
+        }
+
         $category = $request->get('category');
         
         $query = DB::table('peminjaman')
@@ -150,7 +166,7 @@ class RiwayatController extends Controller
                 'kategoris.nama as kategori',
                 'users.name as nama_peminjam'
             )
-            ->where('peminjaman.user_id', auth()->id())
+            ->where('peminjaman.user_id', Auth::id())
             ->where('peminjaman.status', 'dikembalikan');
 
         if ($category && $category !== 'all') {
@@ -168,6 +184,11 @@ class RiwayatController extends Controller
     // METHOD UNTUK FILTER BERDASARKAN BULAN
     public function filterByMonth(Request $request)
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Silakan login terlebih dahulu.'], 401);
+        }
+
         $month = $request->get('month'); // Format: YYYY-MM
         
         $query = DB::table('peminjaman')
@@ -187,7 +208,7 @@ class RiwayatController extends Controller
                 'kategoris.nama as kategori',
                 'users.name as nama_peminjam'
             )
-            ->where('peminjaman.user_id', auth()->id())
+            ->where('peminjaman.user_id', Auth::id())
             ->where('peminjaman.status', 'dikembalikan');
 
         if ($month && $month !== 'all') {
@@ -205,6 +226,11 @@ class RiwayatController extends Controller
     // METHOD UNTUK PENCARIAN
     public function search(Request $request)
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Silakan login terlebih dahulu.'], 401);
+        }
+
         $searchTerm = $request->get('search');
         
         $query = DB::table('peminjaman')
@@ -224,7 +250,7 @@ class RiwayatController extends Controller
                 'kategoris.nama as kategori',
                 'users.name as nama_peminjam'
             )
-            ->where('peminjaman.user_id', auth()->id())
+            ->where('peminjaman.user_id', Auth::id())
             ->where('peminjaman.status', 'dikembalikan');
 
         if ($searchTerm) {

@@ -40,7 +40,7 @@ Route::middleware('auth')->group(function () {
 // 👮 Rute untuk admin
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth'])
+    ->middleware(['auth', 'admin'])
     ->group(function () {
         // Dashboard Admin
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -54,6 +54,11 @@ Route::prefix('admin')
         Route::resource('sub-barang', SubBarangController::class);
         Route::get('sub-barang/by-barang/{barangId}', [SubBarangController::class, 'getByBarang'])->name('sub-barang.by-barang');
         Route::get('sub-barang/available/{barangId}', [SubBarangController::class, 'getAvailableByBarang'])->name('sub-barang.available');
+        
+        // Temporary test route without auth for debugging
+        Route::post('sub-barang/test-update/{id}', [SubBarangController::class, 'testUpdate'])->name('sub-barang.test-update')->withoutMiddleware(['auth', 'admin']);
+
+
 
         // 🗂️ Kategori
         Route::resource('kategori', KategoriController::class);
@@ -102,14 +107,7 @@ Route::prefix('admin')
         Route::get('/dashboard/data', [DashboardController::class, 'getData'])->name('dashboard.data');
     });
 
-// 👥 User view routes (static views)
-Route::prefix('user')->group(function () {
-    Route::view('/home', 'user.home');
-    Route::view('/dashboard-user', 'user.dashboard-user');
-    Route::view('/pinjaman-saya', 'user.pinjaman-saya');
-    Route::view('/riwayat', 'user.riwayat');
-    Route::view('/profile', 'user.profile');
-});
+// 👥 User view routes (static views) - REMOVED: These routes are now handled by controllers with auth middleware
 
 Route::prefix('user')
     ->middleware('auth')
@@ -119,6 +117,9 @@ Route::prefix('user')
         Route::view('pinjaman-saya', 'user.pinjaman-saya')->name('user.pinjaman-saya');
         Route::view('riwayat', 'user.riwayat')->name('user.riwayat');
         Route::view('profile', 'user.profile')->name('user.profile');
+
+        // Route untuk mendapatkan sub barang yang tersedia (untuk user)
+        Route::get('sub-barang/available/{barangId}', [SubBarangController::class, 'getAvailableByBarang'])->name('user.sub-barang.available');
 
         // Transaksi user - commented out until proper controller is created
         // Route::post('transaksi', [UserTransaksiController::class, 'store'])->name('transaksi.store');
@@ -130,7 +131,9 @@ Route::prefix('user')
 // Duplicate route removed - handled by resource route in admin group
 
 // Alternative route for user dashboard (for backward compatibility)
-Route::get('/user/dashboard-user', [DashboardUserController::class, 'index'])->name('user.dashboard-user');
+Route::middleware('auth')->group(function () {
+    Route::get('/user/dashboard-user', [DashboardUserController::class, 'index'])->name('user.dashboard-user');
+});
 
 Route::post('/peminjaman', [PeminjamanController::class, 'store'])->name('peminjaman.store');
 Route::prefix('user')

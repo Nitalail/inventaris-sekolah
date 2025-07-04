@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Barang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class TransaksiController extends Controller
 {
@@ -199,7 +201,7 @@ class TransaksiController extends Controller
 
             // 3. Simpan peminjaman
             DB::table('peminjaman')->insert([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'barang_id' => $validated['barang_id'],
                 'jumlah' => $validated['jumlah'],
                 'tanggal_pinjam' => $validated['tanggal_pinjam'],
@@ -277,7 +279,7 @@ class TransaksiController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Update Transaksi Error: '.$e->getMessage());
+            Log::error('Update Transaksi Error: '.$e->getMessage());
             
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -320,7 +322,7 @@ class TransaksiController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Delete Transaksi Error: '.$e->getMessage());
+            Log::error('Delete Transaksi Error: '.$e->getMessage());
             
             return response()->json([
                 'success' => false,

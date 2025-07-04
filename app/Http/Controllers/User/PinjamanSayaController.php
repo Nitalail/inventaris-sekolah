@@ -5,12 +5,18 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class PinjamanSayaController extends Controller
 {
     public function index()
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk melihat pinjaman Anda.');
+        }
+
         // Ambil data peminjaman user yang sedang berlangsung (bukan status dikembalikan)
         $peminjaman = DB::table('peminjaman')
             ->join('barang', 'peminjaman.barang_id', '=', 'barang.id')
@@ -31,7 +37,7 @@ class PinjamanSayaController extends Controller
                 'kategoris.nama as kategori',
                 'users.name as nama_peminjam'
             )
-            ->where('peminjaman.user_id', auth()->id())
+            ->where('peminjaman.user_id', Auth::id())
             ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'terlambat', 'rusak'])
             ->orderBy('peminjaman.created_at', 'desc')
             ->get();
@@ -147,10 +153,18 @@ class PinjamanSayaController extends Controller
     // Method untuk request perpanjangan
     public function requestExtension(Request $request, $id)
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Silakan login terlebih dahulu untuk mengajukan perpanjangan.'
+            ], 401);
+        }
+
         try {
             $peminjaman = DB::table('peminjaman')
                 ->where('id', $id)
-                ->where('user_id', auth()->id())
+                ->where('user_id', Auth::id())
                 ->where('status', 'dipinjam')
                 ->first();
 
@@ -193,6 +207,11 @@ class PinjamanSayaController extends Controller
     // Method untuk filter berdasarkan status
     public function filterByStatus(Request $request)
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Silakan login terlebih dahulu.'], 401);
+        }
+
         $status = $request->get('status');
         $category = $request->get('category');
         
@@ -214,7 +233,7 @@ class PinjamanSayaController extends Controller
                 'kategoris.nama as kategori',
                 'users.name as nama_peminjam'
             )
-            ->where('peminjaman.user_id', auth()->id())
+            ->where('peminjaman.user_id', Auth::id())
             ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'terlambat', 'rusak']);
 
         // Filter berdasarkan status

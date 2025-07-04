@@ -216,10 +216,7 @@
                         <div>
                             <p class="text-sm font-medium text-gray-500">Total Sub Barang</p>
                             <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.total_items">0</h3>
-                            <p class="text-xs mt-1 flex items-center" :class="stats.items_change >= 0 ? 'text-green-600' : 'text-red-600'">
-                                <span x-text="stats.items_change >= 0 ? '↑' : '↓'"></span>
-                                <span x-text="Math.abs(stats.items_change) + '% sejak bulan lalu'"></span>
-                            </p>
+
                         </div>
                         <div class="w-12 h-12 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600">
                             <i class="fas fa-box text-xl"></i>
@@ -233,10 +230,7 @@
                         <div>
                             <p class="text-sm font-medium text-gray-500">Item Dipinjam</p>
                             <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.borrowed_items">0</h3>
-                            <p class="text-xs mt-1 flex items-center" :class="stats.borrowed_change >= 0 ? 'text-green-600' : 'text-red-600'">
-                                <span x-text="stats.borrowed_change >= 0 ? '↑' : '↓'"></span>
-                                <span x-text="Math.abs(stats.borrowed_change) + '% sejak bulan lalu'"></span>
-                            </p>
+
                         </div>
                         <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                             <i class="fas fa-hand-holding text-xl"></i>
@@ -250,10 +244,7 @@
                         <div>
                             <p class="text-sm font-medium text-gray-500">Kategori</p>
                             <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.categories">0</h3>
-                            <p class="text-xs mt-1 flex items-center" :class="stats.categories_change >= 0 ? 'text-green-600' : 'text-red-600'">
-                                <span x-text="stats.categories_change >= 0 ? '↑' : '↓'"></span>
-                                <span x-text="Math.abs(stats.categories_change) + '% sejak bulan lalu'"></span>
-                            </p>
+
                         </div>
                         <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
                             <i class="fas fa-tag text-xl"></i>
@@ -267,10 +258,7 @@
                         <div>
                             <p class="text-sm font-medium text-gray-500">Ruangan</p>
                             <h3 class="text-2xl font-semibold text-gray-800 mt-1" x-text="stats.rooms">0</h3>
-                            <p class="text-xs mt-1 flex items-center" :class="stats.rooms_change >= 0 ? 'text-green-600' : 'text-red-600'">
-                                <span x-text="stats.rooms_change >= 0 ? '↑' : '↓'"></span>
-                                <span x-text="Math.abs(stats.rooms_change) + '% sejak bulan lalu'"></span>
-                            </p>
+
                         </div>
                         <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
                             <i class="fas fa-building text-xl"></i>

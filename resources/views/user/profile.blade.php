@@ -141,10 +141,20 @@
                         class="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold shadow-lg cursor-pointer"
                         @click="open = !open"
                     >
-                        {{ substr(Auth::user()->name, 0, 1) }}{{ substr(strstr(Auth::user()->name, ' '), 1, 1) }}
+                        @auth
+                            {{ substr(Auth::user()->name, 0, 1) }}{{ substr(strstr(Auth::user()->name, ' '), 1, 1) }}
+                        @else
+                            G
+                        @endauth
                     </div>
                     <div class="hidden md:block">
-                        <h3 class="font-semibold text-gray-900">{{ Auth::user()->name }}</h3>
+                        <h3 class="font-semibold text-gray-900">
+                            @auth
+                                {{ Auth::user()->name }}
+                            @else
+                                Guest
+                            @endauth
+                        </h3>
                         <p class="text-sm text-gray-600">SMAN 1 Cikalong Wetan</p>
                     </div>
 
@@ -187,23 +197,24 @@
                     <div class="relative w-32 h-32 mx-auto mb-6">
                         <div class="absolute inset-0 border-4 border-primary/20 rounded-full avatar-ring"></div>
                         <div class="w-full h-full bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white text-4xl font-bold">
-                            {{ substr(Auth::user()->name, 0, 1) }}{{ substr(strstr(Auth::user()->name, ' '), 1, 1) }}
+                            @auth
+                                {{ substr(Auth::user()->name, 0, 1) }}{{ substr(strstr(Auth::user()->name, ' '), 1, 1) }}
+                            @else
+                                G
+                            @endauth
                         </div>
                     </div>
 
-                    <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ Auth::user()->name }}</h2>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                        @auth
+                            {{ Auth::user()->name }}
+                        @else
+                            Guest User
+                        @endauth
+                    </h2>
                     {{-- <p class="text-gray-600 mb-6">Siswa SMAN 1 Jakarta</p> --}}
 
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-blue-50 rounded-xl p-4 text-center">
-                            <p class="text-2xl font-bold text-primary mb-1">3</p>
-                            <p class="text-sm text-gray-600">Sedang Dipinjam</p>
-                        </div>
-                        <div class="bg-purple-50 rounded-xl p-4 text-center">
-                            <p class="text-2xl font-bold text-secondary mb-1">15</p>
-                            <p class="text-sm text-gray-600">Total Pinjaman</p>
-                        </div>
-                    </div>
+
 
                     <button onclick="openEditProfileModal()" class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-medium hover:from-primary/90 hover:to-secondary/90 transition-all">
                         <i class="fas fa-edit mr-2"></i> Edit Profile
@@ -262,26 +273,46 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-2">
                             <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Nama Lengkap</label>
-                            <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->name }}</p>
+                            <p class="text-lg font-semibold text-gray-800">
+                                @auth
+                                    {{ Auth::user()->name }}
+                                @else
+                                    -
+                                @endauth
+                            </p>
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Peran</label>
                             <p class="text-lg font-semibold text-gray-800">
-                                @if(Auth::user()->role == 'admin')
-                                    Administrator
+                                @auth
+                                    @if(Auth::user()->role == 'admin')
+                                        Administrator
+                                    @else
+                                        Pengguna
+                                    @endif
                                 @else
-                                    Pengguna
-                                @endif
+                                    -
+                                @endauth
                             </p>
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Email</label>
-                            <p class="text-lg font-semibold text-gray-800">{{ Auth::user()->email }}</p>
+                            <p class="text-lg font-semibold text-gray-800">
+                                @auth
+                                    {{ Auth::user()->email }}
+                                @else
+                                    -
+                                @endauth
+                            </p>
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Tanggal Bergabung</label>
                             <p class="text-lg font-semibold text-gray-800">
-                                {{ Auth::user()->created_at->format('d F Y') }}
+                                @auth
+                                    {{ Auth::user()->created_at->format('d F Y') }}
+                                @else
+                                    -
+                                @endauth
                             </p>
                         </div>
                     </div> 

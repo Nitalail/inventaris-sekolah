@@ -20,6 +20,7 @@ class BarangController extends Controller
             ->withCount('subBarang as sub_barang_count')
             ->when($filters['kategori_id'] ?? null, fn($q, $kategori_id) => $q->where('kategori_id', $kategori_id))
             ->when($filters['ruangan_id'] ?? null, fn($q, $ruangan_id) => $q->where('ruangan_id', $ruangan_id))
+            // Tampilkan semua barang (tidak ada lagi filter status)
             ->orderBy('created_at', 'asc')
             ->paginate($perPage);
 
@@ -89,14 +90,6 @@ class BarangController extends Controller
         $barang->update($validated);
 
         return redirect()->back()->with('success', 'Data barang berhasil diperbarui!');
-    }
-
-    public function destroy($id)
-    {
-        $barang = Barang::findOrFail($id);
-        $barang->delete();
-
-        return redirect()->route('admin.barang.index')->with('success', 'Barang berhasil dihapus!');
     }
 
     public function export(Request $request)

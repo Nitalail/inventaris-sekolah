@@ -53,6 +53,12 @@ class RuanganController extends Controller
         ]);
 
         $room = Ruangan::findOrFail($id);
+        
+        // Cek apakah ruangan masih digunakan oleh barang
+        if ($validated['status'] === 'tidak_aktif' && $room->barangs()->count() > 0) {
+            return redirect()->back()->with('error', 'Ruangan tidak dapat dinonaktifkan karena masih terdapat barang di ruangan ini.');
+        }
+
         $room->update($validated);
 
         return redirect()->back()->with('success', 'Data ruangan berhasil diperbarui.');

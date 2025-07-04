@@ -17,6 +17,11 @@ class PeminjamanController extends Controller
 {
     public function index()
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk melihat peminjaman.');
+        }
+
         $peminjaman = DB::table('peminjaman as p')
             ->join('barang as i', 'p.barang_id', '=', 'i.id')
             ->select(
@@ -34,6 +39,14 @@ class PeminjamanController extends Controller
 
     public function store(Request $request)
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Silakan login terlebih dahulu untuk mengajukan peminjaman.'
+            ], 401);
+        }
+
         try {
             Log::info('Peminjaman request data:', $request->all());
 

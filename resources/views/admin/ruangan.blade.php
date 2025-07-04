@@ -303,18 +303,18 @@
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">No</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Kode</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Nama Ruangan</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Jumlah Item</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Jumlah Barang</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200/70" id="table-body">
                                 @forelse ($rooms as $room)
-                                <tr class="room-row table-row-hover transition-colors duration-150">
+                                <tr class="room-row table-row-hover transition-colors duration-150" data-item-count="{{ $room->total_sub_barang ?? 0 }}">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($rooms->currentPage() - 1) * $rooms->perPage() + $loop->iteration }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 room-code">{{ $room->kode_ruangan }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 room-name">{{ $room->nama_ruangan }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $room->total_sub_barang ?? 0 }} item</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $room->total_sub_barang ?? 0 }} barang</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         @if ($room->status === 'aktif')
                                             <span class="badge-aktif">Aktif</span>
@@ -336,13 +336,6 @@
                                                 type="button">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <form action="{{ route('admin.ruangan.destroy', $room->id) }}" method="POST" class="inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-rose-600 hover:text-rose-900 p-2 rounded-lg hover:bg-rose-50 transition-slow" onclick="return confirm('Apakah Anda yakin ingin menghapus ruangan ini?')">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
                                         </div>
                                     </td>
                                 </tr>
@@ -446,7 +439,7 @@
                     </div>
                     
                     <div class="mb-4">
-                        <h4 class="text-sm font-medium text-gray-500">Jumlah Item</h4>
+                        <h4 class="text-sm font-medium text-gray-500">Jumlah Barang</h4>
                         <p class="mt-1 text-sm text-gray-900" id="detail_jumlah_barang">-</p>
                     </div>
                     
@@ -545,7 +538,7 @@
         function showDetailModal(data) {
             document.getElementById('detail_kode').textContent = data.kode_ruangan || '-';
             document.getElementById('detail_nama').textContent = data.nama_ruangan || '-';
-            document.getElementById('detail_jumlah_barang').textContent = (data.total_sub_barang || 0) + ' item';
+            document.getElementById('detail_jumlah_barang').textContent = (data.total_sub_barang || 0) + ' barang';
             
             // Set status with appropriate badge
             const statusEl = document.getElementById('detail_status');
@@ -579,6 +572,26 @@
             document.getElementById('edit_nama_ruangan').value = room.nama_ruangan || '';
             document.getElementById('edit_status').value = room.status || 'aktif';
             document.getElementById('edit_deskripsi').value = room.deskripsi || '';
+
+            // Check if room has items and disable "tidak_aktif" option if it does
+            const statusSelect = document.getElementById('edit_status');
+            const tidakAktifOption = statusSelect.querySelector('option[value="tidak_aktif"]');
+            const itemCount = parseInt(room.total_sub_barang || 0);
+            
+            if (itemCount > 0) {
+                // Disable "tidak_aktif" option if room has items
+                tidakAktifOption.disabled = true;
+                tidakAktifOption.textContent = 'Tidak Aktif (tidak tersedia - ruangan masih digunakan)';
+                
+                // If current status is "tidak_aktif" but room has items, change to "aktif"
+                if (room.status === 'tidak_aktif') {
+                    statusSelect.value = 'aktif';
+                }
+            } else {
+                // Enable "tidak_aktif" option if room has no items
+                tidakAktifOption.disabled = false;
+                tidakAktifOption.textContent = 'Tidak Aktif';
+            }
 
             showModal('modal-edit');
         }

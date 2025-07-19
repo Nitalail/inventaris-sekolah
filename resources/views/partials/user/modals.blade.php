@@ -88,7 +88,6 @@
             <div class="mb-6">
                 <h3 class="text-lg font-semibold mb-2 text-gray-900">${name}</h3>
                 <p class="text-gray-600 mb-3">${description}</p>
-                <p class="text-sm font-semibold px-3 py-1.5 bg-gray-50 rounded-lg border-l-4 border-primary">Kondisi: ${condition}</p>
             </div>
             
             <form id="borrowForm" onsubmit="submitBorrow(event, '${id}')">

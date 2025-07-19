@@ -23,7 +23,8 @@ class LaporanController extends Controller
     public function index()
     {
         $kategoris = Kategori::all();
-        $ruangans = Ruangan::all();
+        // Hanya tampilkan ruangan yang aktif di filter laporan
+        $ruangans = Ruangan::active()->get();
         // Ubah dari get() menjadi paginate()
         $reports = Report::with('user')->latest()->paginate(10);
         $stats = $this->getReportStatistics();

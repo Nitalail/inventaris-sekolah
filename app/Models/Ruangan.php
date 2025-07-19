@@ -38,4 +38,22 @@ class Ruangan extends Model
             ->join('sub_barang', 'barang.id', '=', 'sub_barang.barang_id')
             ->count();
     }
+
+    // Scope untuk ruangan yang aktif
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'aktif');
+    }
+
+    // Scope untuk ruangan yang tidak aktif
+    public function scopeInactive($query)
+    {
+        return $query->where('status', '!=', 'aktif');
+    }
+
+    // Scope untuk ruangan yang sedang diperbaiki
+    public function scopeUnderMaintenance($query)
+    {
+        return $query->where('status', 'perbaikan');
+    }
 }

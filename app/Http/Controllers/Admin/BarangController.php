@@ -31,7 +31,8 @@ class BarangController extends Controller
             ->get();
 
         $kategori = Kategori::all();
-        $ruangan = Ruangan::all();
+        // Hanya tampilkan ruangan yang aktif (tidak sedang diperbaiki atau tidak aktif)
+        $ruangan = Ruangan::active()->get();
 
         return view('admin.barang', compact('barangs', 'kategori', 'ruangan', 'filters', 'perPage', 'subBarangs'));
     }
@@ -39,7 +40,8 @@ class BarangController extends Controller
     public function create()
     {
         $kategori = Kategori::all();
-        $ruangan = Ruangan::all();
+        // Hanya tampilkan ruangan yang aktif untuk pembuatan barang baru
+        $ruangan = Ruangan::active()->get();
 
         return view('admin.barang.create', compact('kategori', 'ruangan'));
     }
@@ -72,7 +74,8 @@ class BarangController extends Controller
     {
         $barang = Barang::findOrFail($id);
         $kategori = Kategori::all();
-        $ruangan = Ruangan::all();
+        // Hanya tampilkan ruangan yang aktif untuk edit barang
+        $ruangan = Ruangan::active()->get();
 
         return view('admin.barang.edit', compact('barang', 'kategori', 'ruangan'));
     }

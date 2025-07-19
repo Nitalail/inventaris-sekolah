@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Profil Siswa - SchoolLend</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="shortcut icon" href="{{ asset('assets/svgs/logo-mark.svg') }}" type="image/x-icon">
@@ -102,6 +103,40 @@
         .password-form .btn-submit:hover {
             opacity: 0.9;
             transform: translateY(-1px);
+        }
+        
+        /* Modal styles */
+        #editProfileModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        #editProfileModal.invisible {
+            visibility: hidden;
+        }
+        
+        #editProfileModal.visible {
+            visibility: visible;
+        }
+        
+        #editProfileModal .glass-card {
+            transition: transform 0.3s ease;
+        }
+        
+        #editProfileModal .glass-card.scale-95 {
+            transform: scale(0.95);
+        }
+        
+        #editProfileModal .glass-card.scale-100 {
+            transform: scale(1);
         }
     </style>
 </head>
@@ -327,7 +362,7 @@
 
                     <!-- Include Update Password Form -->
                     <div class="password-form">
-                        <form method="post" action="{{ route('password.update') }}" class="space-y-6">
+                        <form method="post" action="{{ route('user.profile.password') }}" class="space-y-6">
                             @csrf
                             @method('put')
 
@@ -375,10 +410,10 @@
     </main>
 
     <!-- Edit Profile Modal -->
-    <div id="editProfileModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 invisible opacity-0 transition-all duration-300">
+    <div id="editProfileModal" class="invisible opacity-0">
         <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeEditProfileModal()"></div>
         
-        <div class="relative glass-card rounded-2xl shadow-2xl border border-gray-200/70 w-full max-w-md transform scale-95 transition-all duration-300">
+        <div class="relative glass-card rounded-2xl shadow-2xl border border-gray-200/70 w-full max-w-md scale-95">
             <div class="px-6 py-4 border-b border-gray-200/70 flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-gray-800">Edit Profile Information</h3>
                 <button type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none transition-slow" onclick="closeEditProfileModal()">
@@ -388,7 +423,7 @@
             
             <!-- Profile Information Form -->
             <div class="p-6">
-                <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
+                <form method="post" action="{{ route('user.profile.update') }}" class="space-y-6">
                     @csrf
                     @method('patch')
 
@@ -535,23 +570,53 @@
     <script>
         // Modal functions with smooth animations
         function openEditProfileModal() {
+            console.log('openEditProfileModal called'); // Debug log
             const modal = document.getElementById('editProfileModal');
+            if (!modal) {
+                console.error('Modal element not found!');
+                return;
+            }
+            console.log('Modal found:', modal); // Debug log
+            
+            // Remove invisible and opacity-0 classes
             modal.classList.remove('invisible', 'opacity-0');
+            // Add visible and opacity-100 classes
             modal.classList.add('visible', 'opacity-100');
-            setTimeout(() => {
-                modal.querySelector('.glass-card').classList.remove('scale-95');
-                modal.querySelector('.glass-card').classList.add('scale-100');
-            }, 10);
+            
+            // Animate the modal content
+            const modalContent = modal.querySelector('.glass-card');
+            if (modalContent) {
+                setTimeout(() => {
+                    modalContent.classList.remove('scale-95');
+                    modalContent.classList.add('scale-100');
+                }, 10);
+            }
+            
+            console.log('Modal opened successfully'); // Debug log
         }
 
         function closeEditProfileModal() {
+            console.log('closeEditProfileModal called'); // Debug log
             const modal = document.getElementById('editProfileModal');
-            modal.querySelector('.glass-card').classList.remove('scale-100');
-            modal.querySelector('.glass-card').classList.add('scale-95');
+            if (!modal) {
+                console.error('Modal element not found!');
+                return;
+            }
+            
+            // Animate the modal content first
+            const modalContent = modal.querySelector('.glass-card');
+            if (modalContent) {
+                modalContent.classList.remove('scale-100');
+                modalContent.classList.add('scale-95');
+            }
+            
+            // Then hide the modal
             setTimeout(() => {
                 modal.classList.remove('visible', 'opacity-100');
                 modal.classList.add('invisible', 'opacity-0');
             }, 200);
+            
+            console.log('Modal closed successfully'); // Debug log
         }
 
         // Enhanced toast notification with smooth animations
@@ -643,6 +708,27 @@
                     }, 1500);
                 }
             });
+        });
+        
+        // Ensure DOM is loaded before adding event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing modal functionality');
+            
+            // Test if modal element exists
+            const modal = document.getElementById('editProfileModal');
+            if (modal) {
+                console.log('Modal element found on DOM load');
+            } else {
+                console.error('Modal element not found on DOM load');
+            }
+            
+            // Test if button exists
+            const editButton = document.querySelector('button[onclick="openEditProfileModal()"]');
+            if (editButton) {
+                console.log('Edit button found on DOM load');
+            } else {
+                console.error('Edit button not found on DOM load');
+            }
         });
     </script>
 </body>

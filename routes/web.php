@@ -116,7 +116,10 @@ Route::prefix('user')
         Route::view('home', 'user.home')->name('user.home');
         Route::view('pinjaman-saya', 'user.pinjaman-saya')->name('user.pinjaman-saya');
         Route::view('riwayat', 'user.riwayat')->name('user.riwayat');
-        Route::view('profile', 'user.profile')->name('user.profile');
+        Route::get('profile', [App\Http\Controllers\User\ProfileController::class, 'index'])->name('user.profile');
+        Route::patch('profile', [App\Http\Controllers\User\ProfileController::class, 'update'])->name('user.profile.update');
+        Route::put('profile/password', [App\Http\Controllers\User\ProfileController::class, 'updatePassword'])->name('user.profile.password');
+        Route::delete('profile', [App\Http\Controllers\User\ProfileController::class, 'destroy'])->name('user.profile.destroy');
 
         // Route untuk mendapatkan sub barang yang tersedia (untuk user)
         Route::get('sub-barang/available/{barangId}', [SubBarangController::class, 'getAvailableByBarang'])->name('user.sub-barang.available');
@@ -194,6 +197,14 @@ Route::put('/admin/pengguna/{id}', [PenggunaController::class, 'update']);
 // Temporary CSRF test routes - remove after testing
 Route::get('/test-csrf', function () {
     return view('test-csrf');
+});
+
+Route::get('/test-csrf-profile', function () {
+    return view('test-csrf-profile');
+});
+
+Route::get('/test-modal', function () {
+    return view('test-modal');
 });
 
 Route::post('/test-csrf-endpoint', function () {

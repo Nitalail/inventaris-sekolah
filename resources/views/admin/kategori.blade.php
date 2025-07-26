@@ -376,7 +376,7 @@
                         <div>
                             <label for="nama" class="block text-sm font-medium text-gray-700 mb-1">Nama Kategori</label>
                             <input type="text" name="nama" id="nama" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" 
-                                x-model="form.nama" placeholder="Alat Tulis" required>
+                                x-model="form.nama" @input="generateKode()" placeholder="Alat Tulis" required>
                         </div>
                     </div>
                     
@@ -428,6 +428,17 @@
                     this.form = { kode, nama, deskripsi };
                     this.modalTitle = 'Edit Kategori';
                     this.showModal = true;
+                },
+
+                // Auto-generate kode kategori based on nama kategori
+                generateKode() {
+                    if (this.form.nama && !this.isEditing) {
+                        let nama = this.form.nama.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+                        if (nama.length > 0) {
+                            let randomNum = Math.floor(100 + Math.random() * 900); // 3 digit random number
+                            this.form.kode = nama + '-' + randomNum;
+                        }
+                    }
                 },
 
                 performSearch() {

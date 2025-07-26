@@ -1382,6 +1382,24 @@
         document.getElementById('sidebar-toggle').addEventListener('click', function() {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         });
+
+        // Auto-generate kode barang based on nama barang
+        document.addEventListener('DOMContentLoaded', function() {
+            const namaInput = document.getElementById('nama');
+            const kodeInput = document.getElementById('kode');
+            
+            if (namaInput && kodeInput) {
+                namaInput.addEventListener('input', function() {
+                    let nama = namaInput.value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+                    if (nama.length > 0) {
+                        let randomNum = Math.floor(100 + Math.random() * 900); // 3 digit random number
+                        kodeInput.value = nama + '-' + randomNum;
+                    } else {
+                        kodeInput.value = '';
+                    }
+                });
+            }
+        });
     </script>
 </body>
 

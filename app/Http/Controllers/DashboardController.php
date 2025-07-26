@@ -25,11 +25,15 @@ class DashboardController extends Controller
         $stats = $this->getDashboardStats();
         $recentTransactions = $this->getRecentTransactions();
         $lowStockItems = $this->getLowStockItems();
+        $mostBorrowedItems = $this->getMostBorrowedItems();
+        $stockReport = $this->getStockReport();
 
         return view('admin.dashboard', [
             'stats' => $stats,
             'recentTransactions' => $recentTransactions,
-            'lowStockItems' => $lowStockItems
+            'lowStockItems' => $lowStockItems,
+            'mostBorrowedItems' => $mostBorrowedItems,
+            'stockReport' => $stockReport
         ]);
     }
 
@@ -39,18 +43,21 @@ class DashboardController extends Controller
             $stats = $this->getDashboardStats();
             $recentTransactions = $this->getRecentTransactions();
             $lowStockItems = $this->getLowStockItems();
+            $mostBorrowedItems = $this->getMostBorrowedItems();
+            $stockReport = $this->getStockReport();
 
             return response()->json([
                 'success' => true,
                 'stats' => $stats,
                 'recentTransactions' => $recentTransactions,
-                'lowStockItems' => $lowStockItems
+                'lowStockItems' => $lowStockItems,
+                'mostBorrowedItems' => $mostBorrowedItems,
+                'stockReport' => $stockReport
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading dashboard data',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+                'message' => 'Failed to fetch dashboard data: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -182,15 +189,10 @@ class DashboardController extends Controller
     {
         return Barang::with(['kategori', 'ruangan'])
             ->withCount(['subBarang as available_stock' => function ($query) {
-                $query->whereIn('kondisi', ['baik', 'rusak_ringan'])
-                      ->whereNotExists(function ($subQuery) {
-                          $subQuery->select(DB::raw(1))
-                                   ->from('peminjaman')
-                                   ->whereRaw('JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))')
-                                   ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'dikonfirmasi']);
-                      });
+                $query->whereIn('kondisi', ['baik', 'rusak_ringan']);
             }])
             ->having('available_stock', '<=', self::LOW_STOCK_THRESHOLD)
+            ->having('available_stock', '>', 0) // Exclude items with 0 stock (they're in out of stock)
             ->orderBy('available_stock')
             ->limit(self::LOW_STOCK_ITEMS_LIMIT)
             ->get()
@@ -201,12 +203,80 @@ class DashboardController extends Controller
                     'name' => $barang->nama ?? $barang->nama_barang,
                     'category' => $barang->kategori->nama ?? 'Tidak ada kategori',
                     'room' => $barang->ruangan->nama_ruangan ?? 'Tidak ada ruangan',
-                    'stock' => $barang->available_stock,
+                    'available_stock' => $barang->available_stock,
                     'min_stock' => 5, // Default minimum stock
                     'is_critical' => $barang->available_stock <= 3 // Critical if 3 or less
                 ];
             })
             ->toArray();
+    }
+
+    protected function getMostBorrowedItems()
+    {
+        try {
+            return DB::table('peminjaman')
+                ->select('barang.nama as item_name', DB::raw('COUNT(DISTINCT peminjaman.id) as borrow_count'))
+                ->join('sub_barang', function($join) {
+                    $join->whereRaw('JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))');
+                })
+                ->join('barang', 'sub_barang.barang_id', '=', 'barang.id')
+                ->whereIn('peminjaman.status', ['dipinjam', 'dikonfirmasi', 'dikembalikan'])
+                ->whereNotNull('peminjaman.sub_barang_ids')
+                ->where('peminjaman.sub_barang_ids', '!=', '[]')
+                ->groupBy('barang.id', 'barang.nama')
+                ->orderByDesc('borrow_count')
+                ->limit(5)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'item_name' => $item->item_name ?? 'Barang tidak ditemukan',
+                        'borrow_count' => (int) $item->borrow_count
+                    ];
+                })
+                ->toArray();
+        } catch (\Exception $e) {
+            \Log::error('Error getting most borrowed items: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    protected function getStockReport()
+    {
+        try {
+            // Get low stock items (reuse existing method)
+            $lowStockItems = $this->getLowStockItems();
+            
+            // Get out of stock items - items with no available sub-barang
+            $outOfStockItems = Barang::with(['kategori', 'ruangan'])
+                ->withCount(['subBarang as available_stock' => function ($query) {
+                    $query->whereIn('kondisi', ['baik', 'rusak_ringan']);
+                }])
+                ->having('available_stock', '=', 0)
+                ->get()
+                ->map(function ($barang) {
+                    return [
+                        'id' => $barang->id,
+                        'code' => $barang->kode ?? $barang->kode_barang,
+                        'name' => $barang->nama ?? $barang->nama_barang,
+                        'category' => $barang->kategori->nama ?? 'Tidak ada kategori',
+                        'room' => $barang->ruangan->nama_ruangan ?? 'Tidak ada ruangan',
+                        'available_stock' => $barang->available_stock,
+                        'is_critical' => true // Always critical for out of stock
+                    ];
+                })
+                ->toArray();
+
+            return [
+                'low_stock_items' => $lowStockItems,
+                'out_of_stock_items' => $outOfStockItems
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Error getting stock report: ' . $e->getMessage());
+            return [
+                'low_stock_items' => [],
+                'out_of_stock_items' => []
+            ];
+        }
     }
 
     protected function calculatePercentageChange($oldValue, $newValue)

@@ -643,6 +643,21 @@
                     });
                 });
             });
+
+            // Auto-generate kode ruangan based on nama ruangan and random number
+            const namaInput = document.getElementById('nama_ruangan');
+            const kodeInput = document.getElementById('kode_ruangan');
+            if (namaInput && kodeInput) {
+                namaInput.addEventListener('input', function() {
+                    let nama = namaInput.value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+                    if (nama.length > 0) {
+                        let randomNum = Math.floor(100 + Math.random() * 900); // 3 digit random number
+                        kodeInput.value = nama + '-' + randomNum;
+                    } else {
+                        kodeInput.value = '';
+                    }
+                });
+            }
         });
     </script>
 </body>

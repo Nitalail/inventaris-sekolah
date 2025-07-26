@@ -725,8 +725,8 @@
                             <label for="edit_kode" class="block text-sm font-medium text-gray-700 mb-1">Kode Barang
                                 <span class="text-red-500">*</span></label>
                             <input type="text" name="kode" id="edit_kode"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
-                                x-model="editItem.kode" required>
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-100 cursor-not-allowed"
+                                x-model="editItem.kode" required readonly>
                         </div>
                         <div>
                             <label for="edit_nama" class="block text-sm font-medium text-gray-700 mb-1">Nama Barang
@@ -1094,8 +1094,8 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kode Sub Barang <span class="text-red-500">*</span></label>
                             <input type="text" 
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
-                                x-model="editSubItem.kode" required>
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-100 cursor-not-allowed"
+                                x-model="editSubItem.kode" required readonly>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kondisi <span class="text-red-500">*</span></label>

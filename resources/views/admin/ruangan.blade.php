@@ -482,7 +482,7 @@
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label for="edit_kode_ruangan" class="block text-sm font-medium text-gray-700 mb-1">Kode Ruangan</label>
-                            <input type="text" name="kode_ruangan" id="edit_kode_ruangan" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" required>
+                            <input type="text" name="kode_ruangan" id="edit_kode_ruangan" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-100 cursor-not-allowed" required readonly>
                         </div>
                         <div>
                             <label for="edit_nama_ruangan" class="block text-sm font-medium text-gray-700 mb-1">Nama Ruangan</label>

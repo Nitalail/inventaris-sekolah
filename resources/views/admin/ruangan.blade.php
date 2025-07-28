@@ -644,14 +644,12 @@
                 });
             });
 
-            // Auto-generate kode ruangan based on nama ruangan and incremental number
+            // Auto-generate kode ruangan when form is opened
             const namaInput = document.getElementById('nama_ruangan');
             const kodeInput = document.getElementById('kode_ruangan');
             
-            // Fetch count once when form is opened
-            let ruanganCount = 0;
-            
-            async function fetchRuanganCount() {
+            // Generate code automatically when form is opened
+            async function generateRuanganCodeOnOpen() {
                 try {
                     const response = await fetch('/admin/ruangan/count', {
                         method: 'GET',
@@ -666,30 +664,19 @@
                     }
                     
                     const data = await response.json();
-                    ruanganCount = data.count;
-                } catch (error) {
-                    console.error('Error fetching ruangan count:', error);
-                    ruanganCount = 0;
-                }
-            }
-            
-            // Generate code based on stored count
-            function generateRuanganCode() {
-                if (namaInput.value.trim().length > 0) {
+                    const ruanganCount = data.count;
                     const nextNumber = ruanganCount + 1;
                     const paddedNumber = nextNumber.toString().padStart(3, '0');
                     kodeInput.value = 'R-' + paddedNumber;
-                } else {
-                    kodeInput.value = '';
+                } catch (error) {
+                    console.error('Error fetching ruangan count:', error);
+                    kodeInput.value = 'R-001';
                 }
             }
             
             if (namaInput && kodeInput) {
-                // Fetch count when form is opened
-                fetchRuanganCount();
-                
-                // Generate code on input change (using stored count)
-                namaInput.addEventListener('input', generateRuanganCode);
+                // Generate code immediately when form elements are available
+                generateRuanganCodeOnOpen();
             }
         });
     </script>

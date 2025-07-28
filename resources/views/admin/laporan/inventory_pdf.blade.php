@@ -128,7 +128,7 @@
             <tr>
                 <th style="width: 4%;">No</th>
                 <th style="width: 12%;">Kode Barang</th>
-                <th style="width: 12%;">Kode Item</th>
+                <th style="width: 12%;">Kode Sub Barang</th>
                 <th style="width: 22%;">Nama Barang</th>
                 <th style="width: 12%;">Kategori</th>
                 <th style="width: 12%;">Ruangan</th>

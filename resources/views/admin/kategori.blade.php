@@ -376,7 +376,7 @@
                         <div>
                             <label for="nama" class="block text-sm font-medium text-gray-700 mb-1">Nama Kategori</label>
                             <input type="text" name="nama" id="nama" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" 
-                                x-model="form.nama" @input="generateKode()" placeholder="Alat Tulis" required>
+                                x-model="form.nama" placeholder="Alat Tulis" required>
                         </div>
                     </div>
                     
@@ -422,8 +422,8 @@
                     this.modalTitle = 'Tambah Kategori';
                     this.showModal = true;
                     
-                    // Fetch count once when modal is opened
-                    await this.fetchKategoriCount();
+                    // Generate code automatically when modal is opened
+                    await this.generateKodeOnOpen();
                 },
 
                 openEditModal(id, kode, nama, deskripsi) {
@@ -434,8 +434,8 @@
                     this.showModal = true;
                 },
 
-                // Fetch count once when form is opened
-                async fetchKategoriCount() {
+                // Generate code automatically when modal is opened
+                async generateKodeOnOpen() {
                     try {
                         const response = await fetch('/admin/kategori/count', {
                             method: 'GET',
@@ -450,25 +450,17 @@
                         }
                         
                         const data = await response.json();
-                        this.kategoriCount = data.count;
+                        const kategoriCount = data.count;
+                        const nextNumber = kategoriCount + 1;
+                        const paddedNumber = nextNumber.toString().padStart(3, '0');
+                        this.form.kode = 'KT-' + paddedNumber;
                     } catch (error) {
                         console.error('Error fetching kategori count:', error);
-                        this.kategoriCount = 0;
+                        this.form.kode = 'KT-001';
                     }
                 },
 
-                // Generate code based on stored count
-                generateKode() {
-                    if (this.form.nama && !this.isEditing) {
-                        let nama = this.form.nama.trim();
-                        
-                        if (nama.length > 0) {
-                            const nextNumber = this.kategoriCount + 1;
-                            const paddedNumber = nextNumber.toString().padStart(3, '0');
-                            this.form.kode = 'KT-' + paddedNumber;
-                        }
-                    }
-                },
+
 
                 performSearch() {
                     if (this.searchTerm.trim() === '') {

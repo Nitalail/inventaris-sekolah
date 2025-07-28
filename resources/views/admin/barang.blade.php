@@ -1164,7 +1164,51 @@
                 },
                 viewItem: {},
 
+                // Method to generate barang code when modal is opened
+                async generateBarangCodeOnOpen() {
+                    try {
+                        const response = await fetch('/admin/barang/count', {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        const data = await response.json();
+                        const barangCount = data.count;
+                        const nextNumber = barangCount + 1;
+                        const paddedNumber = nextNumber.toString().padStart(3, '0');
+                        
+                        // Set the code in the input field
+                        const kodeInput = document.getElementById('kode');
+                        if (kodeInput) {
+                            kodeInput.value = 'BRG-' + paddedNumber;
+                        }
+                    } catch (error) {
+                        console.error('Error fetching barang count:', error);
+                        const kodeInput = document.getElementById('kode');
+                        if (kodeInput) {
+                            kodeInput.value = 'BRG-001';
+                        }
+                    }
+                },
 
+                // Watch for modal opening to generate code
+                init() {
+                    this.$watch('showAddModal', (value) => {
+                        if (value) {
+                            // Modal is opened, generate code after a short delay
+                            setTimeout(() => {
+                                this.generateBarangCodeOnOpen();
+                            }, 100);
+                        }
+                    });
+                },
 
                 openEditModal(item) {
                     this.editItem = {
@@ -1382,54 +1426,9 @@
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         });
 
-        // Auto-generate kode barang based on nama barang
-        document.addEventListener('DOMContentLoaded', function() {
-            const namaInput = document.getElementById('nama');
-            const kodeInput = document.getElementById('kode');
-            
-            // Fetch count once when form is opened
-            let barangCount = 0;
-            
-            async function fetchBarangCount() {
-                try {
-                    const response = await fetch('/admin/barang/count', {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    barangCount = data.count;
-                } catch (error) {
-                    console.error('Error fetching barang count:', error);
-                    barangCount = 0;
-                }
-            }
-            
-            // Generate code based on stored count
-            function generateBarangCode() {
-                if (namaInput.value.trim().length > 0) {
-                    const nextNumber = barangCount + 1;
-                    const paddedNumber = nextNumber.toString().padStart(3, '0');
-                    kodeInput.value = 'BRG-' + paddedNumber;
-                } else {
-                    kodeInput.value = '';
-                }
-            }
-            
-            if (namaInput && kodeInput) {
-                // Fetch count when form is opened
-                fetchBarangCount();
-                
-                // Generate code on input change (using stored count)
-                namaInput.addEventListener('input', generateBarangCode);
-            }
+        // Toggle sidebar for mobile
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
         });
     </script>
 </body>

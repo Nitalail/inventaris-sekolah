@@ -38,13 +38,13 @@ class LaporanExport implements FromCollection, WithHeadings, WithMapping, WithTi
         switch ($this->reportType) {
             case 'inventory':
                 return [
-                    'No', 'Kode Barang', 'Kode Item', 'Nama Barang', 'Kategori', 'Ruangan',
+                    'No', 'Kode Barang', 'Kode Sub Barang', 'Nama Barang', 'Kategori', 'Ruangan',
                     'Kondisi', 'Tahun Perolehan', 'Sumber Dana'
                 ];
             case 'transaction':
                 return [
                     'No', 'Kode Barang', 'Nama Barang', 'Peminjam', 'Jumlah',
-                    'Tanggal Pinjam', 'Tanggal Kembali', 'Status', 'Keperluan', 'Kode Item'
+                    'Tanggal Pinjam', 'Tanggal Kembali', 'Status', 'Keperluan', 'Kode Sub Barang'
                 ];
             case 'room':
                 return [

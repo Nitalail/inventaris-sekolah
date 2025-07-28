@@ -140,7 +140,7 @@
                 <th style="width: 9%;">Tgl Pinjam</th>
                 <th style="width: 9%;">Tgl Kembali</th>
                 <th style="width: 8%;">Status</th>
-                <th style="width: 19%;">Kode Item</th>
+                <th style="width: 19%;">Kode Sub Barang</th>
             </tr>
         </thead>
         <tbody>

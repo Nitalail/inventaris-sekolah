@@ -517,8 +517,8 @@
                             <label for="kode" class="block text-sm font-medium text-gray-700 mb-1">Kode Barang
                                 <span class="text-red-500">*</span></label>
                             <input type="text" name="kode" id="kode"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
-                                placeholder="Masukkan kode barang" required>
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-100 cursor-not-allowed"
+                                placeholder="Masukkan kode barang" required readonly>
                         </div>
                         <div>
                             <label for="nama" class="block text-sm font-medium text-gray-700 mb-1">Nama Barang
@@ -1387,27 +1387,48 @@
             const namaInput = document.getElementById('nama');
             const kodeInput = document.getElementById('kode');
             
-            if (namaInput && kodeInput) {
-                namaInput.addEventListener('input', async function() {
-                    let nama = namaInput.value.trim();
-                    if (nama.length > 0) {
-                        try {
-                            // Fetch current count from server
-                            const response = await fetch('/admin/barang/count');
-                            const data = await response.json();
-                            const nextNumber = data.count + 1;
-                            const paddedNumber = nextNumber.toString().padStart(3, '0');
-                            kodeInput.value = 'BRG-' + paddedNumber;
-                        } catch (error) {
-                            console.error('Error fetching barang count:', error);
-                            // Fallback to random number if API fails
-                            let randomNum = Math.floor(100 + Math.random() * 900);
-                            kodeInput.value = 'BRG-' + randomNum;
+            // Fetch count once when form is opened
+            let barangCount = 0;
+            
+            async function fetchBarangCount() {
+                try {
+                    const response = await fetch('/admin/barang/count', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
-                    } else {
-                        kodeInput.value = '';
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                });
+                    
+                    const data = await response.json();
+                    barangCount = data.count;
+                } catch (error) {
+                    console.error('Error fetching barang count:', error);
+                    barangCount = 0;
+                }
+            }
+            
+            // Generate code based on stored count
+            function generateBarangCode() {
+                if (namaInput.value.trim().length > 0) {
+                    const nextNumber = barangCount + 1;
+                    const paddedNumber = nextNumber.toString().padStart(3, '0');
+                    kodeInput.value = 'BRG-' + paddedNumber;
+                } else {
+                    kodeInput.value = '';
+                }
+            }
+            
+            if (namaInput && kodeInput) {
+                // Fetch count when form is opened
+                fetchBarangCount();
+                
+                // Generate code on input change (using stored count)
+                namaInput.addEventListener('input', generateBarangCode);
             }
         });
     </script>

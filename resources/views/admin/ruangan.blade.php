@@ -378,8 +378,8 @@
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label for="kode_ruangan" class="block text-sm font-medium text-gray-700 mb-1">Kode Ruangan</label>
-                            <input type="text" name="kode_ruangan" id="kode_ruangan" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" 
-                                placeholder="R-001" required>
+                            <input type="text" name="kode_ruangan" id="kode_ruangan" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-100 cursor-not-allowed" 
+                                placeholder="R-001" required readonly>
                         </div>
                         <div>
                             <label for="nama_ruangan" class="block text-sm font-medium text-gray-700 mb-1">Nama Ruangan</label>
@@ -647,27 +647,49 @@
             // Auto-generate kode ruangan based on nama ruangan and incremental number
             const namaInput = document.getElementById('nama_ruangan');
             const kodeInput = document.getElementById('kode_ruangan');
-            if (namaInput && kodeInput) {
-                namaInput.addEventListener('input', async function() {
-                    let nama = namaInput.value.trim();
-                    if (nama.length > 0) {
-                        try {
-                            // Fetch current count from server
-                            const response = await fetch('/admin/ruangan/count');
-                            const data = await response.json();
-                            const nextNumber = data.count + 1;
-                            const paddedNumber = nextNumber.toString().padStart(3, '0');
-                            kodeInput.value = 'R-' + paddedNumber;
-                        } catch (error) {
-                            console.error('Error fetching ruangan count:', error);
-                            // Fallback to random number if API fails
-                            let randomNum = Math.floor(100 + Math.random() * 900);
-                            kodeInput.value = 'R-' + randomNum;
+            
+            // Fetch count once when form is opened
+            let ruanganCount = 0;
+            
+            async function fetchRuanganCount() {
+                try {
+                    const response = await fetch('/admin/ruangan/count', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
-                    } else {
-                        kodeInput.value = '';
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                });
+                    
+                    const data = await response.json();
+                    ruanganCount = data.count;
+                } catch (error) {
+                    console.error('Error fetching ruangan count:', error);
+                    ruanganCount = 0;
+                }
+            }
+            
+            // Generate code based on stored count
+            function generateRuanganCode() {
+                if (namaInput.value.trim().length > 0) {
+                    const nextNumber = ruanganCount + 1;
+                    const paddedNumber = nextNumber.toString().padStart(3, '0');
+                    kodeInput.value = 'R-' + paddedNumber;
+                } else {
+                    kodeInput.value = '';
+                }
+            }
+            
+            if (namaInput && kodeInput) {
+                // Fetch count when form is opened
+                fetchRuanganCount();
+                
+                // Generate code on input change (using stored count)
+                namaInput.addEventListener('input', generateRuanganCode);
             }
         });
     </script>

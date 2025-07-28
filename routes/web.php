@@ -46,10 +46,10 @@ Route::prefix('admin')
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // 📦 Barang
+        Route::get('barang/count', [BarangController::class, 'getCount'])->name('barang.count');
         Route::resource('barang', BarangController::class);
         Route::get('barang-export', [BarangController::class, 'export'])->name('barang.export');
         Route::get('barang-print', [BarangController::class, 'print'])->name('barang.print');
-        Route::get('barang/count', [BarangController::class, 'getCount'])->name('barang.count');
 
         // 📦 Sub Barang
         Route::resource('sub-barang', SubBarangController::class);
@@ -62,13 +62,13 @@ Route::prefix('admin')
 
 
         // 🗂️ Kategori
-        Route::resource('kategori', KategoriController::class);
         Route::get('kategori/count', [KategoriController::class, 'getCount'])->name('kategori.count');
+        Route::resource('kategori', KategoriController::class);
 
         // 🏫 Ruangan
+        Route::get('ruangan/count', [RuanganController::class, 'getCount'])->name('ruangan.count');
         Route::resource('ruangan', RuanganController::class);
         Route::get('ruangan/export-pdf', [RuanganController::class, 'exportPDF'])->name('ruangan.exportPDF');
-        Route::get('ruangan/count', [RuanganController::class, 'getCount'])->name('ruangan.count');
 
         // 🔄 Transaksi
         Route::resource('transaksi', TransaksiController::class);

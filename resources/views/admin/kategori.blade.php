@@ -370,8 +370,8 @@
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label for="kode" class="block text-sm font-medium text-gray-700 mb-1">Kode Kategori</label>
-                            <input type="text" name="kode" id="kode" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" 
-                                x-model="form.kode" placeholder="KTG-001" required :readonly="isEditing" :class="isEditing ? 'bg-gray-100 cursor-not-allowed' : ''">
+                            <input type="text" name="kode" id="kode" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-100 cursor-not-allowed" 
+                                x-model="form.kode" placeholder="KT-001" required readonly :class="isEditing ? 'bg-gray-100 cursor-not-allowed' : 'bg-gray-100 cursor-not-allowed'">
                         </div>
                         <div>
                             <label for="nama" class="block text-sm font-medium text-gray-700 mb-1">Nama Kategori</label>
@@ -413,13 +413,17 @@
                     deskripsi: ''
                 },
                 modalTitle: 'Tambah Kategori',
+                kategoriCount: 0, // Store count for code generation
 
-                openAddModal() {
+                async openAddModal() {
                     this.isEditing = false;
                     this.currentId = null;
                     this.form = { kode: '', nama: '', deskripsi: '' };
                     this.modalTitle = 'Tambah Kategori';
                     this.showModal = true;
+                    
+                    // Fetch count once when modal is opened
+                    await this.fetchKategoriCount();
                 },
 
                 openEditModal(id, kode, nama, deskripsi) {
@@ -430,24 +434,38 @@
                     this.showModal = true;
                 },
 
-                // Auto-generate kode kategori based on nama kategori
-                async generateKode() {
+                // Fetch count once when form is opened
+                async fetchKategoriCount() {
+                    try {
+                        const response = await fetch('/admin/kategori/count', {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        const data = await response.json();
+                        this.kategoriCount = data.count;
+                    } catch (error) {
+                        console.error('Error fetching kategori count:', error);
+                        this.kategoriCount = 0;
+                    }
+                },
+
+                // Generate code based on stored count
+                generateKode() {
                     if (this.form.nama && !this.isEditing) {
                         let nama = this.form.nama.trim();
+                        
                         if (nama.length > 0) {
-                            try {
-                                // Fetch current count from server
-                                const response = await fetch('/admin/kategori/count');
-                                const data = await response.json();
-                                const nextNumber = data.count + 1;
-                                const paddedNumber = nextNumber.toString().padStart(3, '0');
-                                this.form.kode = 'KT-' + paddedNumber;
-                            } catch (error) {
-                                console.error('Error fetching kategori count:', error);
-                                // Fallback to random number if API fails
-                                let randomNum = Math.floor(100 + Math.random() * 900);
-                                this.form.kode = 'KT-' + randomNum;
-                            }
+                            const nextNumber = this.kategoriCount + 1;
+                            const paddedNumber = nextNumber.toString().padStart(3, '0');
+                            this.form.kode = 'KT-' + paddedNumber;
                         }
                     }
                 },

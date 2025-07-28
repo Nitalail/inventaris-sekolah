@@ -644,15 +644,26 @@
                 });
             });
 
-            // Auto-generate kode ruangan based on nama ruangan and random number
+            // Auto-generate kode ruangan based on nama ruangan and incremental number
             const namaInput = document.getElementById('nama_ruangan');
             const kodeInput = document.getElementById('kode_ruangan');
             if (namaInput && kodeInput) {
-                namaInput.addEventListener('input', function() {
-                    let nama = namaInput.value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+                namaInput.addEventListener('input', async function() {
+                    let nama = namaInput.value.trim();
                     if (nama.length > 0) {
-                        let randomNum = Math.floor(100 + Math.random() * 900); // 3 digit random number
-                        kodeInput.value = nama + '-' + randomNum;
+                        try {
+                            // Fetch current count from server
+                            const response = await fetch('/admin/ruangan/count');
+                            const data = await response.json();
+                            const nextNumber = data.count + 1;
+                            const paddedNumber = nextNumber.toString().padStart(3, '0');
+                            kodeInput.value = 'R-' + paddedNumber;
+                        } catch (error) {
+                            console.error('Error fetching ruangan count:', error);
+                            // Fallback to random number if API fails
+                            let randomNum = Math.floor(100 + Math.random() * 900);
+                            kodeInput.value = 'R-' + randomNum;
+                        }
                     } else {
                         kodeInput.value = '';
                     }

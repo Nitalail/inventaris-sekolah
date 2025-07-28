@@ -870,7 +870,6 @@
                             {{-- <div>
                                 <h4 class="text-sm font-medium text-gray-500 mb-2 border-b pb-1">Kondisi</h4>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-sm text-gray-600">Status:</span>
                                     <span class="badge" 
                                         :class="{
                                             'badge-success': viewItem.kondisi === 'baik',
@@ -1389,11 +1388,22 @@
             const kodeInput = document.getElementById('kode');
             
             if (namaInput && kodeInput) {
-                namaInput.addEventListener('input', function() {
-                    let nama = namaInput.value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+                namaInput.addEventListener('input', async function() {
+                    let nama = namaInput.value.trim();
                     if (nama.length > 0) {
-                        let randomNum = Math.floor(100 + Math.random() * 900); // 3 digit random number
-                        kodeInput.value = nama + '-' + randomNum;
+                        try {
+                            // Fetch current count from server
+                            const response = await fetch('/admin/barang/count');
+                            const data = await response.json();
+                            const nextNumber = data.count + 1;
+                            const paddedNumber = nextNumber.toString().padStart(3, '0');
+                            kodeInput.value = 'BRG-' + paddedNumber;
+                        } catch (error) {
+                            console.error('Error fetching barang count:', error);
+                            // Fallback to random number if API fails
+                            let randomNum = Math.floor(100 + Math.random() * 900);
+                            kodeInput.value = 'BRG-' + randomNum;
+                        }
                     } else {
                         kodeInput.value = '';
                     }

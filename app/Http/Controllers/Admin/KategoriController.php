@@ -67,6 +67,13 @@ class KategoriController extends Controller
 
         $kategori->delete();
 
-        return redirect()->back()->with('success', 'Kategori berhasil dihapus.');
+        return redirect()->back()->with('success', 'Kategori berhasil dihapus!');
+    }
+
+    // Get count for auto-generation
+    public function getCount()
+    {
+        $count = Kategori::count();
+        return response()->json(['count' => $count]);
     }
 }

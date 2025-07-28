@@ -95,4 +95,11 @@ class RuanganController extends Controller
         $pdf = Pdf::loadView('admin.export-ruangan-pdf', compact('rooms'));
         return $pdf->download('data-ruangan.pdf');
     }
+
+    // Get count for auto-generation
+    public function getCount()
+    {
+        $count = Ruangan::count();
+        return response()->json(['count' => $count]);
+    }
 }

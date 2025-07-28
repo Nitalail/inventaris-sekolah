@@ -105,16 +105,14 @@ class BarangController extends Controller
 
     public function print(Request $request)
     {
-        $filters = $request->only(['kategori_id', 'ruangan_id', 'status', 'tahun']);
+        // Placeholder fitur print, bisa dikembangkan lebih lanjut
+        return redirect()->route('admin.barang.index')->with('info', 'Fitur print sedang dalam pengembangan.');
+    }
 
-        $barangs = Barang::with(['kategori', 'ruangan'])
-            ->when($filters['kategori_id'] ?? null, fn($q, $kategori_id) => $q->where('kategori_id', $kategori_id))
-            ->when($filters['ruangan_id'] ?? null, fn($q, $ruangan_id) => $q->where('ruangan_id', $ruangan_id))
-            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('kondisi', $status))
-            ->when($filters['tahun'] ?? null, fn($q, $tahun) => $q->where('tahun_perolehan', $tahun))
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        return view('admin.barang.print', compact('barangs'));
+    // Get count for auto-generation
+    public function getCount()
+    {
+        $count = Barang::count();
+        return response()->json(['count' => $count]);
     }
 }

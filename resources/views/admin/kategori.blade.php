@@ -431,12 +431,23 @@
                 },
 
                 // Auto-generate kode kategori based on nama kategori
-                generateKode() {
+                async generateKode() {
                     if (this.form.nama && !this.isEditing) {
-                        let nama = this.form.nama.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+                        let nama = this.form.nama.trim();
                         if (nama.length > 0) {
-                            let randomNum = Math.floor(100 + Math.random() * 900); // 3 digit random number
-                            this.form.kode = nama + '-' + randomNum;
+                            try {
+                                // Fetch current count from server
+                                const response = await fetch('/admin/kategori/count');
+                                const data = await response.json();
+                                const nextNumber = data.count + 1;
+                                const paddedNumber = nextNumber.toString().padStart(3, '0');
+                                this.form.kode = 'KT-' + paddedNumber;
+                            } catch (error) {
+                                console.error('Error fetching kategori count:', error);
+                                // Fallback to random number if API fails
+                                let randomNum = Math.floor(100 + Math.random() * 900);
+                                this.form.kode = 'KT-' + randomNum;
+                            }
                         }
                     }
                 },

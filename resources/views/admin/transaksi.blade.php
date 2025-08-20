@@ -490,7 +490,7 @@
                                 Tanggal</label>
                             <input type="date" id="date_from"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
-                                onchange="applyFilters()">
+                                onchange="updateDateToMin(); applyFilters();">
                         </div>
 
                         <div>
@@ -994,6 +994,26 @@
             }
         }
 
+        // Update date_to min value based on date_from
+        function updateDateToMin() {
+            const dateFromInput = document.getElementById('date_from');
+            const dateToInput = document.getElementById('date_to');
+            
+            if (dateFromInput && dateToInput) {
+                const fromDate = dateFromInput.value;
+                if (fromDate) {
+                    dateToInput.min = fromDate;
+                    
+                    // If date_to is earlier than date_from, clear it
+                    if (dateToInput.value && dateToInput.value < fromDate) {
+                        dateToInput.value = '';
+                    }
+                } else {
+                    dateToInput.min = '';
+                }
+            }
+        }
+
         // Clear filters function
         function clearFilters() {
             const statusInput = document.getElementById('status');
@@ -1003,6 +1023,9 @@
             if (statusInput) statusInput.value = '';
             if (dateFromInput) dateFromInput.value = '';
             if (dateToInput) dateToInput.value = '';
+
+            // Reset min value
+            if (dateToInput) dateToInput.min = '';
 
             // Show all rows
             const rows = document.querySelectorAll('#table-body tr');

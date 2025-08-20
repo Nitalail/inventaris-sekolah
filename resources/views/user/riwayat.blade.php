@@ -141,7 +141,7 @@
                                 </span>
                             </div>
                             <span class="px-3 py-1 {{ $item['isOnTime'] ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }} text-sm font-semibold rounded-full">
-                                {{ $item['isOnTime'] ? 'Tepat Waktu' : 'Terlambat ' . $item['lateDays'] . ' hari' }}
+                                {{ $item['isOnTime'] ? 'Tepat Waktu' : 'Terlambat' }}
                             </span>
                         </div>
                         

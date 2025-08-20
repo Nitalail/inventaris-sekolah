@@ -94,6 +94,12 @@ Route::prefix('admin')
         Route::get('/laporan/download/{id}', [LaporanController::class, 'download'])->name('laporan.download');
         Route::post('barang/laporan', [BarangController::class, 'generateInventoryReport'])->name('barang.laporan');
 
+        // 🔍 Search
+        Route::prefix('search')->name('search.')->group(function () {
+            Route::get('/global', [App\Http\Controllers\Admin\SearchController::class, 'globalSearch'])->name('global');
+            Route::get('/quick', [App\Http\Controllers\Admin\SearchController::class, 'quickSearch'])->name('quick');
+        });
+
         // 🔔 Notifications
         Route::prefix('notifications')->name('notifications.')->group(function () {
             Route::get('/', [NotificationController::class, 'index'])->name('index');

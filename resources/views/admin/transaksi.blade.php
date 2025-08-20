@@ -829,32 +829,32 @@
                             <label for="edit-kode-barang" class="block text-sm font-medium text-gray-700 mb-1">Kode
                                 Barang</label>
                             <input type="text" id="edit-kode-barang"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-50"
-                                x-model="currentTransaksi.kode_barang" readonly>
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-50 cursor-not-allowed"
+                                x-model="currentTransaksi.kode_barang" readonly disabled>
                         </div>
 
                         <div>
                             <label for="edit-peminjam" class="block text-sm font-medium text-gray-700 mb-1">Nama
                                 Peminjam</label>
                             <input type="text" id="edit-peminjam" name="peminjam"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-50"
-                                x-model="currentTransaksi.peminjam" readonly>
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-50 cursor-not-allowed"
+                                x-model="currentTransaksi.peminjam" readonly disabled>
                         </div>
 
                         <div>
                             <label for="edit-tanggal-pinjam"
                                 class="block text-sm font-medium text-gray-700 mb-1">Tanggal Pinjam</label>
                             <input type="date" id="edit-tanggal-pinjam" name="tanggal_pinjam"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-50"
-                                x-model="currentTransaksi.tanggal_pinjam" readonly>
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-50 cursor-not-allowed"
+                                x-model="currentTransaksi.tanggal_pinjam" readonly disabled>
                         </div>
 
                         <div>
                             <label for="edit-tanggal-kembali"
                                 class="block text-sm font-medium text-gray-700 mb-1">Tanggal Kembali</label>
                             <input type="date" id="edit-tanggal-kembali" name="tanggal_kembali"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-50"
-                                x-model="currentTransaksi.tanggal_kembali" readonly>
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow bg-gray-50 cursor-not-allowed"
+                                x-model="currentTransaksi.tanggal_kembali" readonly disabled>
                         </div>
 
                         <div class="md:col-span-2">

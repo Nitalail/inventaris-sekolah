@@ -471,11 +471,12 @@
                 </div>
 
                 <div class="p-6">
-                    <form class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <form class="filter-form grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div>
                             <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                             <select id="status"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow">
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
+                                onchange="applyFilters()">
                                 <option value="">Semua Status</option>
                                 <option value="dipinjam">Dipinjam</option>
                                 <option value="dikembalikan">Dikembalikan</option>
@@ -488,20 +489,26 @@
                             <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">Dari
                                 Tanggal</label>
                             <input type="date" id="date_from"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow">
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
+                                onchange="applyFilters()">
                         </div>
 
                         <div>
                             <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">Sampai
                                 Tanggal</label>
                             <input type="date" id="date_to"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow">
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
+                                onchange="applyFilters()">
                         </div>
 
-                        <div class="flex items-end">
+                        <div class="flex items-end space-x-2">
                             <button type="submit"
-                                class="w-full bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-lg hover:from-primary/90 hover:to-secondary/90 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-slow shadow-sm hover:shadow-md">
+                                class="flex-1 bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-lg hover:from-primary/90 hover:to-secondary/90 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-slow shadow-sm hover:shadow-md">
                                 <i class="fas fa-filter mr-2"></i> Filter
+                            </button>
+                            <button type="button" onclick="clearFilters()"
+                                class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-slow shadow-sm hover:shadow-md">
+                                <i class="fas fa-times mr-2"></i> Clear
                             </button>
                         </div>
                     </form>
@@ -663,7 +670,7 @@
 
                     <!-- Pagination -->
                     <div class="mt-6 flex items-center justify-between">
-                        <div class="text-sm text-gray-500">
+                        <div class="text-sm text-gray-500 pagination-info">
                             Menampilkan {{ $transaksis->count() }} dari {{ $transaksis->total() }} transaksi
                         </div>
                         <div class="flex space-x-2">
@@ -918,32 +925,45 @@
         if (filterForm) {
             filterForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                const statusInput = document.getElementById('status');
-                const dateFromInput = document.getElementById('date_from');
-                const dateToInput = document.getElementById('date_to');
+                applyFilters();
+            });
+        }
+
+        function applyFilters() {
+            const statusInput = document.getElementById('status');
+            const dateFromInput = document.getElementById('date_from');
+            const dateToInput = document.getElementById('date_to');
+            
+            const status = statusInput ? statusInput.value.toLowerCase() : '';
+            const dateFrom = dateFromInput ? dateFromInput.value : '';
+            const dateTo = dateToInput ? dateToInput.value : '';
+
+            const rows = document.querySelectorAll('#table-body tr');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                // Skip empty rows
+                if (row.cells.length < 7) return;
                 
-                const status = statusInput ? statusInput.value.toLowerCase() : '';
-                const dateFrom = dateFromInput ? dateFromInput.value : '';
-                const dateTo = dateToInput ? dateToInput.value : '';
+                const rowStatus = row.getAttribute('data-status');
+                const dateCell = row.querySelector('td:nth-child(5)');
+                const rowDate = dateCell ? dateCell.textContent.trim() : '';
 
-                const rows = document.querySelectorAll('#table-body tr');
+                let show = true;
 
-                rows.forEach(row => {
-                    const rowStatus = row.getAttribute('data-status');
-                    const dateCell = row.querySelector('td:nth-child(5)');
-                    const rowDate = dateCell ? dateCell.textContent.trim() : '';
+                // Filter by status
+                if (status && rowStatus !== status) {
+                    show = false;
+                }
 
-                    let show = true;
-
-                    // Filter by status
-                    if (status && rowStatus !== status) {
-                        show = false;
-                    }
-
-                    // Filter by date range
-                    if ((dateFrom || dateTo) && rowDate) {
-                        try {
-                            const rowDateObj = new Date(rowDate.split('/').reverse().join('-'));
+                // Filter by date range
+                if ((dateFrom || dateTo) && rowDate) {
+                    try {
+                        // Convert DD/MM/YYYY to YYYY-MM-DD for comparison
+                        const dateParts = rowDate.split('/');
+                        if (dateParts.length === 3) {
+                            const rowDateFormatted = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                            const rowDateObj = new Date(rowDateFormatted);
                             const startDateObj = dateFrom ? new Date(dateFrom) : null;
                             const endDateObj = dateTo ? new Date(dateTo) : null;
 
@@ -953,14 +973,44 @@
                             if (endDateObj && rowDateObj > endDateObj) {
                                 show = false;
                             }
-                        } catch (error) {
-                            console.error('Error parsing date:', error);
                         }
+                    } catch (error) {
+                        console.error('Error parsing date:', error);
                     }
+                }
 
-                    row.style.display = show ? '' : 'none';
-                });
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
             });
+
+            // Update pagination info
+            updateFilterInfo(visibleCount, rows.length);
+        }
+
+        function updateFilterInfo(visible, total) {
+            const paginationInfo = document.querySelector('.pagination-info');
+            if (paginationInfo) {
+                paginationInfo.textContent = `Menampilkan ${visible} dari ${total} transaksi`;
+            }
+        }
+
+        // Clear filters function
+        function clearFilters() {
+            const statusInput = document.getElementById('status');
+            const dateFromInput = document.getElementById('date_from');
+            const dateToInput = document.getElementById('date_to');
+            
+            if (statusInput) statusInput.value = '';
+            if (dateFromInput) dateFromInput.value = '';
+            if (dateToInput) dateToInput.value = '';
+
+            // Show all rows
+            const rows = document.querySelectorAll('#table-body tr');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+
+            updateFilterInfo(rows.length, rows.length);
         }
 
         // Alpine.js App

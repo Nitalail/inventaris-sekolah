@@ -179,6 +179,7 @@ class TransaksiController extends Controller
             // 1. Cek stok tersedia dari sub barang excluding borrowed items
             $barang = Barang::withCount(['subBarang as available_stock' => function ($query) {
                 $query->whereIn('kondisi', ['baik', 'rusak_ringan'])
+                      ->where('bisa_dipinjam', true)
                       ->whereNotExists(function ($subQuery) {
                           $subQuery->select(DB::raw(1))
                                    ->from('peminjaman')
@@ -205,6 +206,7 @@ class TransaksiController extends Controller
                 'barang_id' => $validated['barang_id'],
                 'jumlah' => $validated['jumlah'],
                 'tanggal_pinjam' => $validated['tanggal_pinjam'],
+                'tanggal_kembali_rencana' => $validated['tanggal_kembali'],
                 'tanggal_kembali' => $validated['tanggal_kembali'],
                 'keperluan' => $validated['keperluan'],
                 'catatan' => $validated['catatan'] ?? null,

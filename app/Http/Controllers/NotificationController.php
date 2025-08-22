@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
@@ -149,6 +150,61 @@ class NotificationController extends Controller
         return response()->json([
             'success' => true,
             'data' => $stats,
+        ]);
+    }
+
+    /**
+     * Get all notifications for user
+     */
+    public function userIndex(Request $request): JsonResponse
+    {
+        $limit = $request->get('limit', 10);
+        $userId = Auth::id();
+        
+        $notifications = Notification::forUser($userId)
+            ->with(['peminjaman.barang'])
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'type' => $notification->type,
+                    'title' => $notification->title,
+                    'message' => $notification->message,
+                    'data' => $notification->data,
+                    'is_read' => $notification->is_read,
+                    'time_ago' => $notification->time_ago,
+                    'icon' => $notification->icon,
+                    'color' => $notification->color,
+                    'created_at' => $notification->created_at->format('Y-m-d H:i:s'),
+                    'peminjaman' => $notification->peminjaman ? [
+                        'id' => $notification->peminjaman->id,
+                        'barang_nama' => $notification->peminjaman->barang->nama ?? 'Unknown',
+                    ] : null,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $notifications,
+        ]);
+    }
+
+    /**
+     * Get unread notifications count for user
+     */
+    public function getUserUnreadCount(): JsonResponse
+    {
+        $userId = Auth::id();
+        
+        $count = Notification::forUser($userId)
+            ->unread()
+            ->count();
+
+        return response()->json([
+            'success' => true,
+            'count' => $count,
         ]);
     }
 

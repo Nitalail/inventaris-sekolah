@@ -33,14 +33,36 @@
             <!-- User Profile & Mobile Menu -->
             <div class="flex items-center gap-4">
                 <!-- Notifications (if any) -->
-                <button class="relative p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-full transition-all" 
-                        onclick="openNotificationModal()"
-                        aria-label="Notifications">
-                    <i class="fas fa-bell text-xl"></i>
-                    <span id="notificationBadge" 
-                          class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full items-center justify-center text-[10px] font-medium" 
-                          style="display: none;">0</span>
-                </button>
+                <div x-data="userHeaderNotifications" x-init="init()" class="relative">
+                    <button class="relative p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-full transition-all" 
+                            @click="toggleNotifications()"
+                            aria-label="Notifications">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span x-show="unreadCount > 0" 
+                              x-text="unreadCount"
+                              x-transition:enter="transition ease-out duration-200"
+                              x-transition:enter-start="opacity-0 scale-75"
+                              x-transition:enter-end="opacity-100 scale-100"
+                              class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center text-[10px] font-medium">
+                        </span>
+                    </button>
+                    
+                    <!-- Quick notification dropdown (minimal) -->
+                    <div x-show="showNotifications" 
+                         x-transition
+                         @click.away="showNotifications = false"
+                         class="absolute right-0 top-12 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                        <div class="p-4 text-center">
+                            <p class="text-sm text-gray-600">
+                                <span x-text="unreadCount"></span> notifikasi belum dibaca
+                            </p>
+                            <button @click="openFullModal()" 
+                                    class="mt-2 text-primary text-sm font-medium hover:underline">
+                                Lihat Semua
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- User Profile Dropdown -->
                 <div class="relative" x-data="{ open: false }">
@@ -128,4 +150,47 @@
             </div>
         </div>
     </div>
-</header> 
+</header>
+
+<script>
+// User header notification system with 3-second auto refresh
+function userHeaderNotifications() {
+    return {
+        unreadCount: 0,
+        showNotifications: false,
+        intervalId: null,
+        
+        init() {
+            this.loadNotificationCount();
+            
+            // Auto refresh every 3 seconds
+            this.intervalId = setInterval(() => {
+                this.loadNotificationCount();
+            }, 3000);
+        },
+        
+        async loadNotificationCount() {
+            try {
+                const response = await fetch('/user/notifications/count');
+                const data = await response.json();
+                if (data.success) {
+                    this.unreadCount = data.count;
+                }
+            } catch (error) {
+                console.error('Error loading notification count:', error);
+            }
+        },
+        
+        toggleNotifications() {
+            this.showNotifications = !this.showNotifications;
+        },
+        
+        openFullModal() {
+            this.showNotifications = false;
+            if (typeof openNotificationModal === 'function') {
+                openNotificationModal();
+            }
+        }
+    }
+}
+</script> 

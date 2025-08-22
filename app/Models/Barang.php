@@ -52,7 +52,8 @@ class Barang extends Model
     public function scopeAvailableForLoan($query)
     {
         return $query->whereHas('subBarang', function ($q) {
-            $q->whereIn('kondisi', ['baik', 'rusak_ringan']);
+            $q->whereIn('kondisi', ['baik', 'rusak_ringan'])
+            ->where('bisa_dipinjam', true);
         });
     }
 
@@ -61,11 +62,12 @@ class Barang extends Model
     {
         return $this->subBarang()
             ->whereIn('kondisi', ['baik', 'rusak_ringan'])
+            ->where('bisa_dipinjam', true)
             ->whereNotExists(function ($query) {
                 $query->select(DB::raw(1))
-                      ->from('peminjaman')
-                      ->whereRaw('JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))')
-                      ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'dikonfirmasi']);
+                    ->from('peminjaman')
+                    ->whereRaw('JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))')
+                    ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'dikonfirmasi']);
             })
             ->count();
     }

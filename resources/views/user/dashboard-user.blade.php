@@ -740,43 +740,93 @@
             return colors[type] || 'bg-blue-100 text-blue-600';
         }
 
-        function markAsRead(notificationId) {
+        async function markAsRead(notificationId) {
             const notification = notifications.find(n => n.id === notificationId);
             if (notification && !notification.read) {
-                notification.read = true;
-                updateNotificationBadge();
-                
-                // Update UI
-                const notificationElement = document.querySelector(`[onclick="markAsRead(${notificationId})"]`);
-                if (notificationElement) {
-                    notificationElement.classList.remove('bg-primary/10', 'border-l-4', 'border-primary');
-                    notificationElement.classList.add('bg-white');
-                    
-                    const unreadBadge = notificationElement.querySelector('.absolute');
-                    if (unreadBadge) {
-                        unreadBadge.remove();
+                try {
+                    // Get CSRF token safely
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    if (!csrfToken) {
+                        console.error('CSRF token not found');
+                        return;
                     }
+                    
+                    // Send API request to mark as read on server
+                    const response = await fetch(`/user/notifications/${notificationId}/read`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // Update local state only after successful server update
+                        notification.read = true;
+                        updateNotificationBadge();
+                        
+                        // Update UI
+                        const notificationElement = document.querySelector(`[onclick="markAsRead(${notificationId})"]`);
+                        if (notificationElement) {
+                            notificationElement.classList.remove('bg-primary/10', 'border-l-4', 'border-primary');
+                            notificationElement.classList.add('bg-white');
+                            
+                            const unreadBadge = notificationElement.querySelector('.absolute');
+                            if (unreadBadge) {
+                                unreadBadge.remove();
+                            }
+                        }
+                    } else {
+                        console.error('Failed to mark notification as read on server');
+                    }
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
                 }
             }
         }
 
-        function markAllAsRead() {
-            notifications.forEach(notification => {
-                notification.read = true;
-            });
-            
-            updateNotificationBadge();
-            
-            // Update all notification elements in the modal
-            document.querySelectorAll('#notificationsList > div').forEach(element => {
-                element.classList.remove('bg-primary/10', 'border-l-4', 'border-primary');
-                element.classList.add('bg-white');
-                
-                const unreadBadge = element.querySelector('.absolute');
-                if (unreadBadge) {
-                    unreadBadge.remove();
+        async function markAllAsRead() {
+            try {
+                // Get CSRF token safely
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                if (!csrfToken) {
+                    console.error('CSRF token not found');
+                    return;
                 }
-            });
+                
+                // Send API request to mark all as read on server
+                const response = await fetch('/user/notifications/mark-all-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+                
+                if (response.ok) {
+                    // Update local state only after successful server update
+                    notifications.forEach(notification => {
+                        notification.read = true;
+                    });
+                    
+                    updateNotificationBadge();
+                    
+                    // Update all notification elements in the modal
+                    document.querySelectorAll('#notificationsList > div').forEach(element => {
+                        element.classList.remove('bg-primary/10', 'border-l-4', 'border-primary');
+                        element.classList.add('bg-white');
+                        
+                        const unreadBadge = element.querySelector('.absolute');
+                        if (unreadBadge) {
+                            unreadBadge.remove();
+                        }
+                    });
+                } else {
+                    console.error('Failed to mark all notifications as read on server');
+                }
+            } catch (error) {
+                console.error('Error marking all notifications as read:', error);
+            }
         }
 
         function updateNotificationBadge() {
@@ -905,6 +955,8 @@
         });
     </script>
 
+    <!-- User Notifications System with 3-second Auto Refresh -->
+    @include('partials.user-notifications')
     
 </body>
 </html>

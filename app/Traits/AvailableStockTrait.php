@@ -13,6 +13,7 @@ trait AvailableStockTrait
     protected function availableSubBarangConstraint($query)
     {
         return $query->whereIn('kondisi', ['baik', 'rusak_ringan'])
+                     ->where('bisa_dipinjam', true)
                      ->whereNotExists(function ($subQuery) {
                          $subQuery->select(DB::raw(1))
                                   ->from('peminjaman')

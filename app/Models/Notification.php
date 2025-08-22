@@ -97,6 +97,14 @@ class Notification extends Model
     }
 
     /**
+     * Scope to get notifications for a specific user.
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    /**
      * Scope to get recent notifications.
      */
     public function scopeRecent($query, $days = 7)

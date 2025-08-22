@@ -29,7 +29,14 @@ class SubBarangController extends Controller
             'kode' => 'required|unique:sub_barang,kode|max:50',
             'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat,nonaktif',
             'tahun_perolehan' => 'required|integer|min:1900|max:' . date('Y'),
+            'catatan' => 'nullable|string',
+            'bisa_dipinjam' => 'nullable|boolean',
         ]);
+
+        // Set default value for bisa_dipinjam if not provided
+        if (!isset($validated['bisa_dipinjam'])) {
+            $validated['bisa_dipinjam'] = true;
+        }
 
         SubBarang::create($validated);
 
@@ -66,11 +73,29 @@ class SubBarangController extends Controller
                 'kode' => 'required|max:50|unique:sub_barang,kode,' . $id,
                 'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat,nonaktif',
                 'tahun_perolehan' => 'required|integer|min:1900|max:' . date('Y'),
+                'catatan' => 'nullable|string',
+                'bisa_dipinjam' => 'nullable|boolean',
             ]);
 
             // Convert tahun_perolehan to integer if it's a string
             if (isset($validated['tahun_perolehan']) && is_string($validated['tahun_perolehan'])) {
                 $validated['tahun_perolehan'] = (int) $validated['tahun_perolehan'];
+            }
+
+            // Business logic: bisa_dipinjam can only be changed for 'rusak_ringan' condition
+            // Always set bisa_dipinjam based on kondisi
+            if ($validated['kondisi'] === 'rusak_ringan') {
+                // For rusak_ringan, use the provided value or default to true
+                if (!isset($validated['bisa_dipinjam'])) {
+                    $validated['bisa_dipinjam'] = true;
+                }
+            } else {
+                // For other conditions, set automatically based on kondisi
+                if ($validated['kondisi'] === 'baik') {
+                    $validated['bisa_dipinjam'] = true;
+                } else { // rusak_berat, nonaktif
+                    $validated['bisa_dipinjam'] = false;
+                }
             }
 
             $subBarang->update($validated);
@@ -151,13 +176,14 @@ class SubBarangController extends Controller
     {
         $subBarangs = SubBarang::where('barang_id', $barangId)
             ->whereIn('kondisi', ['baik', 'rusak_ringan'])
+            ->where('bisa_dipinjam', true)
             ->whereNotExists(function ($subQuery) {
                 $subQuery->select(DB::raw(1))
                          ->from('peminjaman')
                          ->whereRaw('JSON_CONTAINS(peminjaman.sub_barang_ids, CAST(sub_barang.id as JSON))')
                          ->whereIn('peminjaman.status', ['pending', 'dipinjam', 'dikonfirmasi']);
             })
-            ->get(['id', 'kode', 'kondisi', 'tahun_perolehan']);
+            ->get(['id', 'kode', 'kondisi', 'tahun_perolehan', 'catatan', 'bisa_dipinjam']);
         
         return response()->json($subBarangs);
     }

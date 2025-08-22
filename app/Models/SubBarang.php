@@ -13,11 +13,14 @@ class SubBarang extends Model
         'kode',
         'kondisi',
         'tahun_perolehan',
+        'catatan',
+        'bisa_dipinjam',
     ];
 
     // Cast kondisi sebagai string
     protected $casts = [
         'kondisi' => 'string',
+        'bisa_dipinjam' => 'boolean',
     ];
 
     // Scope untuk sub barang yang dapat dipinjam
@@ -93,7 +96,13 @@ class SubBarang extends Model
     // Method untuk cek apakah dapat dipinjam
     public function canBeLoaned()
     {
-        return in_array($this->kondisi, ['baik', 'rusak_ringan']);
+        return in_array($this->kondisi, ['baik', 'rusak_ringan']) && $this->bisa_dipinjam;
+    }
+
+    // Method untuk cek apakah bisa_dipinjam dapat diubah (hanya untuk kondisi rusak_ringan)
+    public function canEditBisaDipinjam()
+    {
+        return $this->kondisi === 'rusak_ringan';
     }
 
     public function barang()

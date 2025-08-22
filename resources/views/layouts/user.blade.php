@@ -85,6 +85,9 @@
     
     <!-- User Modals -->
     @include('partials.user.modals')
+    
+    <!-- User Notifications System -->
+    @include('partials.user-notifications')
 @endsection
 
 @section('scripts')

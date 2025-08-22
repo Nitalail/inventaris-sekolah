@@ -189,7 +189,8 @@ class DashboardController extends Controller
     {
         return Barang::with(['kategori', 'ruangan'])
             ->withCount(['subBarang as available_stock' => function ($query) {
-                $query->whereIn('kondisi', ['baik', 'rusak_ringan']);
+                $query->whereIn('kondisi', ['baik', 'rusak_ringan'])
+                      ->where('bisa_dipinjam', true);
             }])
             ->having('available_stock', '<=', self::LOW_STOCK_THRESHOLD)
             ->having('available_stock', '>', 0) // Exclude items with 0 stock (they're in out of stock)
@@ -249,7 +250,8 @@ class DashboardController extends Controller
             // Get out of stock items - items with no available sub-barang
             $outOfStockItems = Barang::with(['kategori', 'ruangan'])
                 ->withCount(['subBarang as available_stock' => function ($query) {
-                    $query->whereIn('kondisi', ['baik', 'rusak_ringan']);
+                    $query->whereIn('kondisi', ['baik', 'rusak_ringan'])
+                          ->where('bisa_dipinjam', true);
                 }])
                 ->having('available_stock', '=', 0)
                 ->get()

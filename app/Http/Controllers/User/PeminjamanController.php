@@ -78,6 +78,7 @@ class PeminjamanController extends Controller
             $selectedSubBarang = \App\Models\SubBarang::whereIn('id', $validated['subBarangIds'])
                 ->where('barang_id', $validated['barangId'])
                 ->whereIn('kondisi', ['baik', 'rusak_ringan'])
+                ->where('bisa_dipinjam', true)
                 ->whereNotExists(function ($subQuery) {
                     $subQuery->select(DB::raw(1))
                              ->from('peminjaman')
@@ -136,6 +137,7 @@ class PeminjamanController extends Controller
                     'sub_barang_ids' => json_encode($validated['subBarangIds']),
                     'jumlah' => $validated['quantity'],
                     'tanggal_pinjam' => $validated['startDate'],
+                    'tanggal_kembali_rencana' => $validated['endDate'],
                     'tanggal_kembali' => $validated['endDate'],
                     'keperluan' => $validated['purpose'],
                     'status' => 'pending',

@@ -971,6 +971,9 @@
                                             Tahun Perolehan</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                            Bisa Dipinjam</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                                             Aksi</th>
                                     </tr>
                                 </thead>
@@ -1017,8 +1020,35 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
                                     x-text="sub.tahun_perolehan"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <template x-if="sub.kondisi === 'rusak_ringan'">
+                                        <span class="inline-flex items-center">
+                                            <span :class="sub.bisa_dipinjam ? 'text-green-600' : 'text-red-600'">
+                                                <i :class="sub.bisa_dipinjam ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                                                <span class="ml-1" x-text="sub.bisa_dipinjam ? 'Ya' : 'Tidak'"></span>
+                                            </span>
+                                        </span>
+                                    </template>
+                                    <template x-if="sub.kondisi === 'baik'">
+                                        <span class="inline-flex items-center text-green-600">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span class="ml-1">Ya</span>
+                                        </span>
+                                    </template>
+                                    <template x-if="sub.kondisi === 'rusak_berat' || sub.kondisi === 'nonaktif'">
+                                        <span class="inline-flex items-center text-red-600">
+                                            <i class="fas fa-times-circle"></i>
+                                            <span class="ml-1">Tidak</span>
+                                        </span>
+                                    </template>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
+                                        <button
+                                            class="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-slow"
+                                            @click="openDetailSubModal(sub)" title="Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
                                         <button
                                             class="text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50 transition-slow"
                                             @click="openEditSubModal(sub)" title="Edit">
@@ -1113,6 +1143,21 @@
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
                                 x-model="editSubItem.tahun_perolehan" min="1900" :max="new Date().getFullYear()" required>
                         </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                            <textarea 
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
+                                x-model="editSubItem.catatan" rows="3" placeholder="Catatan tentang sub barang ini..."></textarea>
+                        </div>
+                        <div class="md:col-span-2" x-show="editSubItem.kondisi === 'rusak_ringan'">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" 
+                                    class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                                    x-model="editSubItem.bisa_dipinjam">
+                                <span class="text-sm font-medium text-gray-700">Bisa dipinjam</span>
+                                <span class="text-xs text-gray-500">(Hanya bisa diubah untuk kondisi rusak ringan)</span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="mt-6 flex justify-end space-x-3">
@@ -1130,6 +1175,91 @@
             </div>
         </div>
 
+        <!-- Modal Detail Sub Barang -->
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-show="showDetailSubModal" x-cloak>
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity transition-slow"
+                @click="showDetailSubModal = false"></div>
+
+            <div class="relative glass rounded-xl shadow-2xl border border-gray-200/70 w-full max-w-2xl h-auto max-h-[90vh] overflow-y-auto transform transition-all"
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+                <div class="px-6 py-4 border-b border-gray-200/70 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-800">Detail Sub Barang</h3>
+                    <button type="button"
+                        class="text-gray-400 hover:text-gray-500 focus:outline-none transition-slow"
+                        @click="showDetailSubModal = false">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Barang</label>
+                            <div class="px-4 py-2 bg-gray-50 rounded-lg text-gray-800" x-text="detailSubItem.barang_nama"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kode Sub Barang</label>
+                            <div class="px-4 py-2 bg-gray-50 rounded-lg text-gray-800" x-text="detailSubItem.kode"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kondisi</label>
+                            <div class="px-4 py-2 bg-gray-50 rounded-lg">
+                                <span class="badge" :class="{
+                                    'badge-success': detailSubItem.kondisi === 'baik',
+                                    'badge-warning': detailSubItem.kondisi === 'rusak_ringan',
+                                    'badge-danger': detailSubItem.kondisi === 'rusak_berat',
+                                    'badge-gray': detailSubItem.kondisi === 'nonaktif'
+                                }" x-text="detailSubItem.kondisi === 'baik' ? 'Baik' : 
+                                          detailSubItem.kondisi === 'rusak_ringan' ? 'Rusak Ringan' : 
+                                          detailSubItem.kondisi === 'rusak_berat' ? 'Rusak Berat' :
+                                          detailSubItem.kondisi === 'nonaktif' ? 'Nonaktif' : 'Tidak Diketahui'"></span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tahun Perolehan</label>
+                            <div class="px-4 py-2 bg-gray-50 rounded-lg text-gray-800" x-text="detailSubItem.tahun_perolehan"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Bisa Dipinjam</label>
+                            <div class="px-4 py-2 bg-gray-50 rounded-lg">
+                                <template x-if="detailSubItem.kondisi === 'rusak_ringan'">
+                                    <span class="inline-flex items-center">
+                                        <span :class="detailSubItem.bisa_dipinjam ? 'text-green-600' : 'text-red-600'">
+                                            <i :class="detailSubItem.bisa_dipinjam ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                                            <span class="ml-1" x-text="detailSubItem.bisa_dipinjam ? 'Ya' : 'Tidak'"></span>
+                                        </span>
+                                    </span>
+                                </template>
+                                <template x-if="detailSubItem.kondisi !== 'rusak_ringan'">
+                                    <span class="text-gray-500">
+                                        <i :class="(detailSubItem.kondisi === 'baik') ? 'fas fa-check-circle text-green-600' : 'fas fa-times-circle text-red-600'"></i>
+                                        <span class="ml-1" x-text="(detailSubItem.kondisi === 'baik') ? 'Ya (Otomatis)' : 'Tidak (Otomatis)'"></span>
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                            <div class="px-4 py-2 bg-gray-50 rounded-lg text-gray-800 min-h-[80px]" x-text="detailSubItem.catatan || 'Tidak ada catatan'"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <button type="button"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-slow"
+                            @click="showDetailSubModal = false">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
     </main>
 
@@ -1140,6 +1270,7 @@
                 showAddSubModal: false,
                 showEditModal: false,
                 showEditSubModal: false,
+                showDetailSubModal: false,
                 showViewModal: false,
 
                 subBarangCache: {},
@@ -1160,7 +1291,19 @@
                     barang_nama: '',
                     kode: '',
                     kondisi: '',
-                    tahun_perolehan: ''
+                    tahun_perolehan: '',
+                    catatan: '',
+                    bisa_dipinjam: true
+                },
+                detailSubItem: {
+                    id: '',
+                    barang_id: '',
+                    barang_nama: '',
+                    kode: '',
+                    kondisi: '',
+                    tahun_perolehan: '',
+                    catatan: '',
+                    bisa_dipinjam: true
                 },
                 viewItem: {},
 
@@ -1278,19 +1421,45 @@
                         barang_nama: this.viewItem.nama,
                         kode: sub.kode,
                         kondisi: sub.kondisi,
-                        tahun_perolehan: sub.tahun_perolehan
+                        tahun_perolehan: sub.tahun_perolehan,
+                        catatan: sub.catatan || '',
+                        bisa_dipinjam: sub.bisa_dipinjam !== undefined ? sub.bisa_dipinjam : true
                     };
                     this.showEditSubModal = true;
                 },
 
+                openDetailSubModal(sub) {
+                    this.detailSubItem = {
+                        id: sub.id,
+                        barang_id: sub.barang_id,
+                        barang_nama: this.viewItem.nama,
+                        kode: sub.kode,
+                        kondisi: sub.kondisi,
+                        tahun_perolehan: sub.tahun_perolehan,
+                        catatan: sub.catatan || '',
+                        bisa_dipinjam: sub.bisa_dipinjam !== undefined ? sub.bisa_dipinjam : true
+                    };
+                    this.showDetailSubModal = true;
+                },
+
                 updateSubBarang() {
+                    // Get CSRF token safely
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    if (!csrfToken) {
+                        console.error('CSRF token not found');
+                        alert('Terjadi kesalahan: CSRF token tidak ditemukan');
+                        return;
+                    }
+                    
                     const formData = new FormData();
                     formData.append('_method', 'PUT');
-                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                    formData.append('_token', csrfToken);
                     formData.append('barang_id', this.editSubItem.barang_id);
                     formData.append('kode', this.editSubItem.kode);
                     formData.append('kondisi', this.editSubItem.kondisi);
                     formData.append('tahun_perolehan', this.editSubItem.tahun_perolehan);
+                    formData.append('catatan', this.editSubItem.catatan || '');
+                    formData.append('bisa_dipinjam', this.editSubItem.bisa_dipinjam ? '1' : '0');
 
                     console.log('Updating sub barang:', this.editSubItem);
                     // Convert FormData to object for logging
@@ -1300,18 +1469,14 @@
                     }
                     console.log('Form data:', formDataObj);
 
-                    console.log('Sending request to:', `/admin/sub-barang/test-update/${this.editSubItem.id}`);
+                    console.log('Sending request to:', `/admin/sub-barang/${this.editSubItem.id}`);
                     
-                    // Get fresh CSRF token
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-                    console.log('CSRF Token:', csrfToken);
-                    
-                    fetch(`/admin/sub-barang/test-update/${this.editSubItem.id}`, {
+                    fetch(`/admin/sub-barang/${this.editSubItem.id}`, {
                         method: 'POST',
+                        body: formData,
                         headers: {
                             'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
+                            'Accept': 'application/json'
                         }
                     })
                     .then(response => {

@@ -133,6 +133,14 @@ Route::prefix('user')
         // Route untuk mendapatkan sub barang yang tersedia (untuk user)
         Route::get('sub-barang/available/{barangId}', [SubBarangController::class, 'getAvailableByBarang'])->name('user.sub-barang.available');
 
+        // 🔔 User Notifications
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [NotificationController::class, 'userIndex'])->name('index');
+            Route::get('/count', [NotificationController::class, 'getUserUnreadCount'])->name('count');
+            Route::put('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        });
+
         // Transaksi user - commented out until proper controller is created
         // Route::post('transaksi', [UserTransaksiController::class, 'store'])->name('transaksi.store');
 

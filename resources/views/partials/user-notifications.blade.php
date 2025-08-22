@@ -1,5 +1,5 @@
-<!-- Notification Bell System -->
-<div class="relative" x-data="notificationSystem" x-init="initializeComponent()">
+<!-- User Notification Bell System -->
+<div class="relative" x-data="userNotificationSystem" x-init="initializeComponent()">
     <button @click="toggleNotifications()" 
             class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 rounded-full transition-slow">
         <i class="fas fa-bell text-xl"></i>
@@ -77,10 +77,10 @@
     </div>
 </div>
 
-<!-- Notification System JavaScript -->
+<!-- User Notification System JavaScript -->
 <script>
-if (typeof notificationSystem === 'undefined') {
-    function notificationSystem() {
+if (typeof userNotificationSystem === 'undefined') {
+    function userNotificationSystem() {
         return {
             showNotifications: false,
             notifications: [],
@@ -89,15 +89,15 @@ if (typeof notificationSystem === 'undefined') {
             isReady: false,
             intervalId: null,
 
-                         initializeComponent() {
-                 // Wait for DOM to be fully ready
-                 this.$nextTick(() => {
-                     setTimeout(() => {
-                         this.init();
-                         this.$el.setAttribute('data-alpine-ready', 'true');
-                     }, 150);
-                 });
-             },
+            initializeComponent() {
+                // Wait for DOM to be fully ready
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        this.init();
+                        this.$el.setAttribute('data-alpine-ready', 'true');
+                    }, 150);
+                });
+            },
 
             init() {
                 this.loadNotificationCount();
@@ -114,9 +114,9 @@ if (typeof notificationSystem === 'undefined') {
                 }
                 this.intervalId = setInterval(() => {
                     if (this.isReady) {
-                    this.loadNotificationCount();
-                    if (this.showNotifications) {
-                        this.loadNotifications();
+                        this.loadNotificationCount();
+                        if (this.showNotifications) {
+                            this.loadNotifications();
                         }
                     }
                 }, 3000);
@@ -124,7 +124,7 @@ if (typeof notificationSystem === 'undefined') {
 
             async loadNotificationCount() {
                 try {
-                    const response = await fetch('/admin/notifications/count');
+                    const response = await fetch('/user/notifications/count');
                     const data = await response.json();
                     if (data.success) {
                         this.unreadCount = data.count;
@@ -139,7 +139,7 @@ if (typeof notificationSystem === 'undefined') {
                 
                 this.loading = true;
                 try {
-                    const response = await fetch('/admin/notifications?limit=10');
+                    const response = await fetch('/user/notifications?limit=10');
                     const data = await response.json();
                     if (data.success) {
                         this.notifications = data.data;
@@ -162,18 +162,11 @@ if (typeof notificationSystem === 'undefined') {
 
             async markAsRead(notificationId) {
                 try {
-                    // Get CSRF token safely
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-                    if (!csrfToken) {
-                        console.error('CSRF token not found');
-                        return;
-                    }
-                    
-                    const response = await fetch(`/admin/notifications/${notificationId}/read`, {
+                    const response = await fetch(`/user/notifications/${notificationId}/read`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                         }
                     });
                     
@@ -192,18 +185,11 @@ if (typeof notificationSystem === 'undefined') {
 
             async markAllAsRead() {
                 try {
-                    // Get CSRF token safely
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-                    if (!csrfToken) {
-                        console.error('CSRF token not found');
-                        return;
-                    }
-                    
-                    const response = await fetch('/admin/notifications/mark-all-read', {
+                    const response = await fetch('/user/notifications/mark-all-read', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                         }
                     });
                     
@@ -241,4 +227,4 @@ if (typeof notificationSystem === 'undefined') {
         }
     }
 }
-</script> 
+</script>

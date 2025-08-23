@@ -574,6 +574,13 @@
                         const kondisiLabel = item.kondisi === 'baik' ? 'Baik' : 'Rusak Ringan';
                         const kondisiClass = item.kondisi === 'baik' ? 'text-green-600' : 'text-amber-600';
                         
+                        // Add catatan display for rusak_ringan items
+                        const catatanDisplay = item.kondisi === 'rusak_ringan' && item.catatan ? 
+                            `<div class="mt-1 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                                <span class="text-xs font-medium text-amber-800">📝 Catatan:</span>
+                                <span class="text-xs text-amber-700 ml-1">${item.catatan}</span>
+                            </div>` : '';
+                        
                         return `
                             <label class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition cursor-pointer border border-transparent hover:border-gray-200">
                                 <input type="checkbox" class="sub-barang-checkbox" value="${item.id}" onchange="updateSelectedCount()">
@@ -583,6 +590,7 @@
                                         <span class="${kondisiClass} text-xs font-medium">${kondisiIcon} ${kondisiLabel}</span>
                                     </div>
                                     <span class="text-xs text-gray-500">Tahun Perolehan: ${item.tahun_perolehan}</span>
+                                    ${catatanDisplay}
                                 </div>
                             </label>
                         `;

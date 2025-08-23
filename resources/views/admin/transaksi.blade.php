@@ -480,8 +480,8 @@
                                 <option value="">Semua Status</option>
                                 <option value="dipinjam">Dipinjam</option>
                                 <option value="dikembalikan">Dikembalikan</option>
-                                <option value="terlambat">Terlambat</option>
                                 <option value="diperbaiki">Diperbaiki</option>
+                                <option value="rusak">Rusak</option>
                             </select>
                         </div>
 
@@ -872,7 +872,6 @@
                                 x-model="currentTransaksi.status">
                                 <option value="dipinjam">Dipinjam</option>
                                 <option value="dikembalikan">Dikembalikan</option>
-                                <option value="terlambat">Terlambat</option>
                                 <option value="diperbaiki">Diperbaiki</option>
                                 <option value="rusak">Rusak</option>
                             </select>

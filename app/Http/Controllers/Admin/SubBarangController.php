@@ -33,9 +33,25 @@ class SubBarangController extends Controller
             'bisa_dipinjam' => 'nullable|boolean',
         ]);
 
-        // Set default value for bisa_dipinjam if not provided
-        if (!isset($validated['bisa_dipinjam'])) {
-            $validated['bisa_dipinjam'] = true;
+        // Convert tahun_perolehan to integer if it's a string
+        if (isset($validated['tahun_perolehan']) && is_string($validated['tahun_perolehan'])) {
+            $validated['tahun_perolehan'] = (int) $validated['tahun_perolehan'];
+        }
+
+        // Business logic: bisa_dipinjam can only be changed for 'rusak_ringan' condition
+        // Always set bisa_dipinjam based on kondisi
+        if ($validated['kondisi'] === 'rusak_ringan') {
+            // For rusak_ringan, use the provided value or default to true
+            if (!isset($validated['bisa_dipinjam'])) {
+                $validated['bisa_dipinjam'] = true;
+            }
+        } else {
+            // For other conditions, set automatically based on kondisi
+            if ($validated['kondisi'] === 'baik') {
+                $validated['bisa_dipinjam'] = true;
+            } else { // rusak_berat, nonaktif
+                $validated['bisa_dipinjam'] = false;
+            }
         }
 
         SubBarang::create($validated);

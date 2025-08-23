@@ -631,39 +631,32 @@
                     </button>
                 </div>
 
-                <form method="POST" action="{{ route('admin.sub-barang.store') }}" class="p-6">
-                    @csrf
+                <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="kondisi" class="block text-sm font-medium text-gray-700 mb-1">Barang <span
+                            <label for="add_barang_id" class="block text-sm font-medium text-gray-700 mb-1">Barang <span
                                     class="text-red-500">*</span></label>
-                            {{-- <select name="barang_id" id="barang_id" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow" required>
-                                <option value="">Pilih Barang</option>
-                                @foreach ($barangs as $barang)
-                                    <option value="{{ $barang->id }}">{{ $barang->nama }}</option>
-                                @endforeach
-                            </select> --}}
-                            <input type="text" name="barang_id" id="barang_id"
+                            <input type="text" id="add_barang_id"
                                 class="w-full border hidden border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
                                 readonly required>
-                            <input type="text" name="" id="barang_nama"
+                            <input type="text" id="add_barang_nama"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
                                 readonly required>
                         </div>
                         <div>
-                            <label for="kode" class="block text-sm font-medium text-gray-700 mb-1">Kode Barang
+                            <label for="add_kode" class="block text-sm font-medium text-gray-700 mb-1">Kode Barang
                                 <span class="text-red-500">*</span></label>
-                            <input type="text" name="kode" id="kode_sub_barang"
+                            <input type="text" id="add_kode"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
-                                placeholder="Masukkan kode barang" required>
+                                placeholder="Masukkan kode barang" x-model="addSubItem.kode" required>
                         </div>
 
                         <div>
-                            <label for="kondisi" class="block text-sm font-medium text-gray-700 mb-1">Kondisi <span
+                            <label for="add_kondisi" class="block text-sm font-medium text-gray-700 mb-1">Kondisi <span
                                     class="text-red-500">*</span></label>
-                            <select name="kondisi" id="kondisi"
+                            <select id="add_kondisi"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
-                                required>
+                                x-model="addSubItem.kondisi" required>
                                 <option value="">Pilih Kondisi</option>
                                 <option value="baik">Baik</option>
                                 <option value="rusak_ringan">Rusak Ringan</option>
@@ -672,12 +665,38 @@
                         </div>
 
                         <div>
-                            <label for="tahun_perolehan" class="block text-sm font-medium text-gray-700 mb-1">Tahun
+                            <label for="add_tahun_perolehan" class="block text-sm font-medium text-gray-700 mb-1">Tahun
                                 Perolehan <span class="text-red-500">*</span></label>
-                            <input type="number" name="tahun_perolehan" id="tahun_perolehan"
+                            <input type="number" id="add_tahun_perolehan"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
                                 placeholder="Masukkan tahun perolehan" min="1900" max="{{ date('Y') }}"
-                                required>
+                                x-model="addSubItem.tahun_perolehan" required>
+                        </div>
+                    </div>
+
+                    <!-- Field Catatan -->
+                    <div class="mt-4">
+                        <label for="add_catatan" class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                        <textarea id="add_catatan" rows="3"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
+                            placeholder="Masukkan catatan tentang sub barang (opsional)"
+                            x-model="addSubItem.catatan"></textarea>
+                    </div>
+
+                    <!-- Field Bisa Dipinjam -->
+                    <div class="mt-4">
+                        <label for="add_bisa_dipinjam" class="block text-sm font-medium text-gray-700 mb-1">Bisa Dipinjam</label>
+                        <div class="flex items-center space-x-3">
+                            <label class="flex items-center">
+                                <input type="checkbox" 
+                                    class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                                    x-show="addSubItem.kondisi === 'rusak_ringan'"
+                                    x-model="addSubItem.bisa_dipinjam">
+                                <span class="ml-2 text-sm text-gray-700" x-show="addSubItem.kondisi === 'rusak_ringan'">Ya, bisa dipinjam</span>
+                            </label>
+                            <span class="text-sm text-gray-500" x-show="addSubItem.kondisi === 'baik'">Otomatis: Ya (kondisi baik)</span>
+                            <span class="text-sm text-gray-500" x-show="addSubItem.kondisi === 'rusak_berat'">Otomatis: Tidak (kondisi rusak berat)</span>
+                            <span class="text-sm text-gray-500" x-show="!addSubItem.kondisi">Pilih kondisi terlebih dahulu</span>
                         </div>
                     </div>
 
@@ -687,12 +706,13 @@
                             @click="showAddSubModal = false">
                             Batal
                         </button>
-                        <button type="submit"
-                            class="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:from-primary/90 hover:to-secondary/90 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-slow shadow-sm hover:shadow-md">
+                        <button type="button"
+                            class="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:from-primary/90 hover:to-secondary/90 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-slow shadow-sm hover:shadow-md"
+                            @click="addSubBarang()">
                             <i class="fas fa-save mr-2"></i> Simpan
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
 
@@ -1295,6 +1315,15 @@
                     catatan: '',
                     bisa_dipinjam: true
                 },
+                addSubItem: {
+                    barang_id: '',
+                    barang_nama: '',
+                    kode: '',
+                    kondisi: '',
+                    tahun_perolehan: '',
+                    catatan: '',
+                    bisa_dipinjam: true
+                },
                 detailSubItem: {
                     id: '',
                     barang_id: '',
@@ -1520,19 +1549,104 @@
                     this.showViewModal = false;
                     this.showAddSubModal = true;
                     
+                    // Initialize addSubItem with current barang data
+                    this.addSubItem = {
+                        barang_id: this.viewItem.id,
+                        barang_nama: this.viewItem.nama,
+                        kode: '',
+                        kondisi: '',
+                        tahun_perolehan: '',
+                        catatan: '',
+                        bisa_dipinjam: true
+                    };
+                    
                     // Load current sub barang data for code generation
                     const existingSubBarangs = this.subBarangData[this.viewItem.id] || [];
                     
                     this.$nextTick(() => {
-                        document.getElementById('barang_id').value = this.viewItem.id;
-                        document.getElementById('barang_nama').value = this.viewItem.nama;
+                        document.getElementById('add_barang_id').value = this.viewItem.id;
+                        document.getElementById('add_barang_nama').value = this.viewItem.nama;
                         
                         // Generate sub barang code by finding the first available increment
                         const nextIncrement = this.findNextAvailableIncrement(existingSubBarangs, this.viewItem.kode);
                         const paddedIncrement = nextIncrement.toString().padStart(3, '0');
                         const newSubCode = this.viewItem.kode + '-' + paddedIncrement;
                         
-                        document.getElementById('kode_sub_barang').value = newSubCode;
+                        this.addSubItem.kode = newSubCode;
+                    });
+                },
+
+                addSubBarang() {
+                    // Get CSRF token safely
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    if (!csrfToken) {
+                        console.error('CSRF token not found');
+                        alert('Terjadi kesalahan: CSRF token tidak ditemukan');
+                        return;
+                    }
+                    
+                    // Validate required fields
+                    if (!this.addSubItem.kode || !this.addSubItem.kondisi || !this.addSubItem.tahun_perolehan) {
+                        alert('Mohon lengkapi semua field yang wajib diisi');
+                        return;
+                    }
+                    
+                    const formData = new FormData();
+                    formData.append('_token', csrfToken);
+                    formData.append('barang_id', this.addSubItem.barang_id);
+                    formData.append('kode', this.addSubItem.kode);
+                    formData.append('kondisi', this.addSubItem.kondisi);
+                    formData.append('tahun_perolehan', this.addSubItem.tahun_perolehan);
+                    formData.append('catatan', this.addSubItem.catatan || '');
+                    formData.append('bisa_dipinjam', this.addSubItem.bisa_dipinjam ? '1' : '0');
+
+                    console.log('Adding sub barang:', this.addSubItem);
+                    
+                    fetch('/admin/sub-barang', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response data:', data);
+                        if (data.success) {
+                            this.showAddSubModal = false;
+                            
+                            // Show success message
+                            alert('Sub barang berhasil ditambahkan!');
+                            
+                            // Reload sub barang data to show new item
+                            this.loadSubBarangData(this.addSubItem.barang_id);
+                            
+                            // Reset form
+                            this.addSubItem = {
+                                barang_id: '',
+                                barang_nama: '',
+                                kode: '',
+                                kondisi: '',
+                                tahun_perolehan: '',
+                                catatan: '',
+                                bisa_dipinjam: true
+                            };
+                        } else {
+                            alert('Terjadi kesalahan: ' + (data.message || 'Gagal menambahkan sub barang'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Terjadi kesalahan: ' + error.message);
                     });
                 },
 

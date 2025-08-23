@@ -663,7 +663,7 @@
                                     class="text-red-500">*</span></label>
                             <select name="kondisi" id="kondisi"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
-                                onchange="handleKondisiChange()" required>
+                                required>
                                 <option value="">Pilih Kondisi</option>
                                 <option value="baik">Baik</option>
                                 <option value="rusak_ringan">Rusak Ringan</option>
@@ -678,23 +678,6 @@
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
                                 placeholder="Masukkan tahun perolehan" min="1900" max="{{ date('Y') }}"
                                 required>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div class="md:col-span-2">
-                            <label for="catatan" class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
-                            <textarea name="catatan" id="catatan"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-slow"
-                                rows="3" placeholder="Catatan tentang sub barang ini..."></textarea>
-                        </div>
-                        <div class="md:col-span-2" id="bisa_dipinjam_container" style="display: none;">
-                            <label class="flex items-center space-x-2">
-                                <input type="checkbox" name="bisa_dipinjam" id="bisa_dipinjam" value="1"
-                                    class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2">
-                                <span class="text-sm font-medium text-gray-700">Bisa dipinjam</span>
-                                <span class="text-xs text-gray-500">(Hanya bisa diubah untuk kondisi rusak ringan)</span>
-                            </label>
                         </div>
                     </div>
 
@@ -1151,6 +1134,7 @@
                                 <option value="baik">Baik</option>
                                 <option value="rusak_ringan">Rusak Ringan</option>
                                 <option value="rusak_berat">Rusak Berat</option>
+                                <option value="nonaktif">Nonaktif</option>
                             </select>
                         </div>
                         <div>
@@ -1607,28 +1591,9 @@
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         });
 
-        // Function to handle kondisi change in add sub barang modal
-        function handleKondisiChange() {
-            const kondisiSelect = document.getElementById('kondisi');
-            const bisaDipinjamContainer = document.getElementById('bisa_dipinjam_container');
-            const bisaDipinjamCheckbox = document.getElementById('bisa_dipinjam');
-            
-            if (kondisiSelect && bisaDipinjamContainer && bisaDipinjamCheckbox) {
-                if (kondisiSelect.value === 'rusak_ringan') {
-                    bisaDipinjamContainer.style.display = 'block';
-                } else {
-                    bisaDipinjamContainer.style.display = 'none';
-                    bisaDipinjamCheckbox.checked = false;
-                }
-            }
-        }
-
-        // Add event listener for kondisi select in add sub barang modal
-        document.addEventListener('DOMContentLoaded', function() {
-            const kondisiSelect = document.getElementById('kondisi');
-            if (kondisiSelect) {
-                kondisiSelect.addEventListener('change', handleKondisiChange);
-            }
+        // Toggle sidebar for mobile
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
         });
     </script>
 </body>
